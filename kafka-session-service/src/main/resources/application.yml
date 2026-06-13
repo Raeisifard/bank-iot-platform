@@ -1,0 +1,63 @@
+#debug: true
+server:
+  port: 8082
+spring:
+  application:
+    name: kafka-session-service
+  kafka:
+    bootstrap-servers:
+      - 172.16.88.115:9092
+    consumer:
+      group-id: session-registry-group
+      auto-offset-reset: latest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.isc.contract.event.session.ClientConnectedEvent
+        max.poll.records: 500
+        session.timeout.ms: 30000
+        heartbeat.interval.ms: 10000
+    listener:
+      ack-mode: manual_immediate
+      concurrency: 3
+      missing-topics-fatal: false
+  data:
+    redis:
+      host: 172.16.88.115
+      port: 6379
+      password: StrongRedisPassword
+      database: 0
+      timeout: 5s
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+          max-wait: 2s
+logging:
+  level:
+    root: INFO
+    org.springframework.kafka: INFO
+    com.isc.session: DEBUG
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - metrics
+          - prometheus
+  endpoint:
+    health:
+      show-details: always
+app:
+  redis:
+    session-prefix: "session:"
+    client-sessions-prefix: "client-sessions:"
+    online-users-key: online-users
+    default-ttl-hours: 24

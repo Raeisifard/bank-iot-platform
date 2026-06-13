@@ -1,0 +1,64 @@
+Reading from MQTT to Kafka
+----
+EMQX
+|
+v
+Spring Boot
+|
++--> Kafka Topic
+mqtt.client.connected
+
+Kafka Consumer Group
+|
++--> Redis Session Registry
+----
+Sample Message to Kafka
+----
+{
+	"timestamp": 1780842949578,
+	"username": "CUST-1001",
+	"protocol": 5,
+	"jwt": {
+		"sid": "SID-b1498a6e-793e-4dbc-96ae-c5534aadeff2",
+		"jti": "JTI-55addf1f-f243-4ad9-ae3e-4da6d1ac16ff",
+		"iss": "bank-auth",
+		"did": "DEVICE-1",
+		"cid": "MOBILE-APP",
+		"aud": "mobile-app"
+	},
+	"client_id": "CUST-1001",
+	"ip_address": "192.168.218.99:63168"
+}
+----
+----
+EVENT =
+{
+  "eventId" : "81adc63c-118c-4c9a-8edb-e38f36902f52",
+  "eventType" : "CLIENT_CONNECTED",
+  "version" : 1,
+  "eventTime" : 1781277847.136086000,
+  "source" : "homa",
+  "traceId" : null,
+  "correlationId" : "81adc63c-118c-4c9a-8edb-e38f36902f52",
+  "tenantId" : "default",
+  "actor" : "ANDROID",
+  "channel" : "emqx",
+  "nodeId" : "123456-D",
+  "environment" : "dev",
+  "aggregateType" : "SESSION",
+  "aggregateId" : "SID-47889487-0818-47dc-8ace-67d21b2ffb93",
+  "timestamp" : 1781277847147,
+  "clientId" : "CUST-1001",
+  "username" : "behnam",
+  "ipAddress" : "192.168.218.99:51914",
+  "protocol" : 5,
+  "jwt" : {
+    "sid" : "SID-47889487-0818-47dc-8ace-67d21b2ffb93",
+    "jti" : "JTI-a220e06e-9366-45ee-b97a-b7751727b6a0",
+    "iss" : "bank-auth",
+    "did" : "DEVICE-1",
+    "cid" : "ANDROID",
+    "aud" : "ANDROID"
+  }
+}
+----

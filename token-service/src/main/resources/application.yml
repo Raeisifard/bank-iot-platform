@@ -1,0 +1,57 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: token-service
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+  data:
+    redis:
+      host: 172.16.88.115
+      port: 6379
+      password: StrongRedisPassword
+      timeout: 3000
+
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+
+vault:
+  uri: http://172.16.88.115:8200
+  token: root
+security:
+  jwt-secret: my-super-secret-key-my-super-secret-key
+  vault:
+    transit:
+      key-name: bank-jwt
+  jwt:
+    issuer: bank-auth
+    audience: ANDROID
+    access-token-ttl: P1D
+    refresh-token-ttl: P30D
+    kv-mount: kv
+    kv-path: "jwt"#"key-management/bank-jwt" #kv/data/jwt
+
+    rotation:
+      strategy: SCHEDULED #MANUAL, SCHEDULED, EVENT_DRIVEN
+      key-interval: P30D
+      overlap-period: P1D
+      retain-versions: 3
+      check-interval: 5
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: banking-api
+        url: /openapi/banking-api.yml
+
+      - name: spring-generated
+        url: /v3/api-docs

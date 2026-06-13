@@ -1,0 +1,21 @@
+
+=== How to use ClientConnectedEvent
+[source,java]
+----
+ClientConnectedEvent event =
+        SessionEvents.connectedEventBuilder("CUST-1001")
+                .source("mqtt-service")
+                .environment("prod")
+                .nodeId("mqtt-node-01")
+                .tenantId("BANK")
+                .actor("SYSTEM")
+                .traceId(traceId)
+                .correlationId(correlationId)
+                .timestamp(1780842949578L)
+                .clientId("CUST-1001")
+                .username("CUST-1001")
+                .ipAddress("192.168.218.99:63168")
+                .protocol(5)
+                .jwt(jwtInfo)
+                .build();
+----

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="UltimateRestHistory">
+    <items>
+      <historyItem>
+        <option name="timestamp" value="1781334736670" />
+        <request method="POST" url="http://localhost:8080/api/v1/auth/token">
+          <bodyContent>{
+  &quot;customerId&quot; : &quot;&quot;,
+  &quot;deviceId&quot; : &quot;&quot;,
+  &quot;clientId&quot; : &quot;&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1781334727857" />
+        <request url="http://localhost:8080/.well-known/jwks.json" />
+      </historyItem>
+    </items>
+  </component>
+</project>

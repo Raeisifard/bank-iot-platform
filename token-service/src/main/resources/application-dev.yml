@@ -1,0 +1,10 @@
+security:
+  authentication:
+    enabled: false
+
+logging:
+  level:
+    org.springframework.security: TRACE
+    org.springframework.web: TRACE
+    org.springframework.web.servlet.DispatcherServlet: TRACE
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE

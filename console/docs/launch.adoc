@@ -1,0 +1,23 @@
+= Launching Console Module
+Firstname Lastname <author@asciidoctor.org>
+3.0, July 29, 2022: AsciiDoc article template
+:toc:
+:icons: font
+:url-quickref: https://docs.asciidoctor.org/asciidoc/latest/syntax-quick-reference/
+
+Content entered directly below the header but before the first section heading is called the preamble.
+
+=== Creating jar file
+commands
+----
+./mvnw clean package
+or
+mvnw.cmd clean package
+----
+
+=== Running Console
+commands
+----
+java -jar target/console-1.0-SNAPSHOT.jar
+----
+

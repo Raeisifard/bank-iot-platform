@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: token-service
+  profiles:
+    active: dev
 
   jackson:
     serialization:
@@ -24,6 +26,34 @@ spring:
           max-idle: 16
           min-idle: 4
 
+  boot:
+    admin:
+      client:
+        url: http://localhost:9000
+        auto-registration: true
+        instance:
+          prefer-ip: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+  health:
+    redis:
+      enabled: true
+    diskspace:
+      enabled: true
+
+  info:
+    env:
+      enabled: true
+
 vault:
   uri: http://172.16.88.115:8200
   token: root
@@ -31,15 +61,21 @@ security:
   jwt-secret: my-super-secret-key-my-super-secret-key
   vault:
     transit:
-      key-name: bank-jwt
+      key-name: bank-jwt-v2
   jwt:
     issuer: bank-auth
     audience: ANDROID
-    access-token-ttl: P1D
-    refresh-token-ttl: P30D
-    kv-mount: kv
-    kv-path: "jwt"#"key-management/bank-jwt" #kv/data/jwt
 
+    access-token-ttl: P1D # 5min<---->15min
+    refresh-token-ttl: P30D
+    refresh-token-audit-ttl: P10D
+
+    session-idle-ttl: P30D
+    session-absolute-ttl: P90D
+    session-audit-ttl: P10D
+
+    kv-mount: kv
+    kv-path: "key-management/bank-jwt" #kv/data/jwt
     rotation:
       strategy: SCHEDULED #MANUAL, SCHEDULED, EVENT_DRIVEN
       key-interval: P30D

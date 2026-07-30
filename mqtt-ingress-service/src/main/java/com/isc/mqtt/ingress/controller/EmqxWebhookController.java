@@ -3,7 +3,7 @@ package com.isc.mqtt.ingress.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isc.common.constants.KafkaTopics;
-import com.isc.common.event.KafkaEventFactory;
+import com.isc.contract.event.KafkaEventFactory;
 import com.isc.contract.event.session.ClientConnectedEvent;
 import com.isc.mqtt.ingress.dto.EmqxClientConnectedRequest;
 import io.swagger.v3.oas.annotations.Operation;

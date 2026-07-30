@@ -2,21 +2,42 @@
 <project version="4">
   <component name="UltimateRestApiCache">
     <cachedApis>
-      <api method="POST" url="/api/v1/{channel}/client/connected" className="com.isc.mqtt.ingress.controller.EmqxWebhookController" methodName="connected" moduleName="mqtt-ingress-service.main" description="Client Connected Event">
+      <api method="DELETE" url="/api/v1/acks/{messageId}" className="com.isc.acknowledge.controller.AckController" methodName="deleteAck" moduleName="acknowledge-service" description="Delete Transaction">
+        <params>
+          <param name="messageId" value="test" type="PATH" dataType="String" />
+        </params>
+      </api>
+      <api method="POST" url="/api/v1/acks" className="com.isc.acknowledge.controller.AckController" methodName="publishAck" moduleName="acknowledge-service" description="Send ACK to Kafka">
+        <params>
+          <param name="body" value="{&#13;&#10;  &quot;transactionId&quot; : &quot;&quot;,&#13;&#10;  &quot;traceId&quot; : &quot;&quot;,&#13;&#10;  &quot;messageId&quot; : &quot;&quot;,&#13;&#10;  &quot;customerId&quot; : &quot;&quot;,&#13;&#10;  &quot;deviceId&quot; : &quot;&quot;,&#13;&#10;  &quot;clientId&quot; : &quot;&quot;,&#13;&#10;  &quot;deliveryAttempt&quot; : 0,&#13;&#10;  &quot;deliveredAt&quot; : null,&#13;&#10;  &quot;ackAt&quot; : null,&#13;&#10;  &quot;status&quot; : &quot;RECEIVED&quot;,&#13;&#10;  &quot;failureReason&quot; : &quot;&quot;,&#13;&#10;  &quot;jwtId&quot; : &quot;&quot;,&#13;&#10;  &quot;sessionId&quot; : &quot;&quot;,&#13;&#10;  &quot;appVersion&quot; : &quot;&quot;,&#13;&#10;  &quot;platform&quot; : &quot;&quot;,&#13;&#10;  &quot;ipAddress&quot; : &quot;&quot;&#13;&#10;}" type="BODY" dataType="AckRequest" />
+        </params>
+      </api>
+      <api method="GET" url="/api/v1/acks/ack" className="com.isc.acknowledge.controller.AckController" methodName="ack" moduleName="acknowledge-service" />
+      <api method="POST" url="/api/v1/{channel}/client/connected" className="com.isc.mqtt.ingress.controller.EmqxWebhookController" methodName="connected" moduleName="mqtt-ingress-service" description="Client Connected Event">
         <params>
           <param name="body" value="{&#13;&#10;  &quot;timestamp&quot; : 0,&#13;&#10;  &quot;clientId&quot; : &quot;&quot;,&#13;&#10;  &quot;username&quot; : &quot;&quot;,&#13;&#10;  &quot;ipAddress&quot; : &quot;&quot;,&#13;&#10;  &quot;protocol&quot; : 0,&#13;&#10;  &quot;jwt&quot; : {&#13;&#10;    &quot;sid&quot; : &quot;&quot;,&#13;&#10;    &quot;jti&quot; : &quot;&quot;,&#13;&#10;    &quot;iss&quot; : &quot;&quot;,&#13;&#10;    &quot;did&quot; : &quot;&quot;,&#13;&#10;    &quot;cid&quot; : &quot;&quot;,&#13;&#10;    &quot;aud&quot; : &quot;&quot;&#13;&#10;  }&#13;&#10;}" type="BODY" dataType="EmqxClientConnectedRequest" />
           <param name="channel" value="test" type="PATH" dataType="String" />
         </params>
       </api>
-      <api method="POST" url="/api/v1/test" className="com.isc.mqtt.ingress.controller.EmqxWebhookController" methodName="test" moduleName="mqtt-ingress-service.main">
+      <api method="POST" url="/api/v1/test" className="com.isc.mqtt.ingress.controller.EmqxWebhookController" methodName="test" moduleName="mqtt-ingress-service">
         <params>
           <param name="body" value="&quot;&quot;" type="BODY" dataType="String" />
         </params>
       </api>
-      <api method="GET" url="/.well-known/jwks.json" className="com.isc.tokenservice.controller.JwksController" methodName="jwks" moduleName="token-service.main" />
-      <api method="POST" url="/api/v1/auth/token" className="com.isc.tokenservice.controller.AuthController" methodName="token" moduleName="token-service.main">
+      <api method="POST" url="/api/v1/auth/token" className="com.isc.tokenservice.controller.TokenController" methodName="token" moduleName="token-service">
         <params>
-          <param name="body" value="{&#13;&#10;  &quot;customerId&quot; : &quot;&quot;,&#13;&#10;  &quot;deviceId&quot; : &quot;&quot;,&#13;&#10;  &quot;clientId&quot; : &quot;&quot;&#13;&#10;}" type="BODY" dataType="LoginRequest" />
+          <param name="body" value="{&#13;&#10;  &quot;username&quot; : &quot;&quot;,&#13;&#10;  &quot;password&quot; : &quot;&quot;,&#13;&#10;  &quot;customerId&quot; : &quot;&quot;,&#13;&#10;  &quot;otp&quot; : &quot;&quot;,&#13;&#10;  &quot;deviceId&quot; : &quot;&quot;,&#13;&#10;  &quot;clientId&quot; : &quot;&quot;&#13;&#10;}" type="BODY" dataType="LoginRequest" />
+        </params>
+      </api>
+      <api method="POST" url="/api/v1/auth/refresh" className="com.isc.tokenservice.controller.TokenController" methodName="refresh" moduleName="token-service">
+        <params>
+          <param name="body" value="{&#13;&#10;  &quot;refreshToken&quot; : &quot;&quot;&#13;&#10;}" type="BODY" dataType="RefreshTokenRequest" />
+        </params>
+      </api>
+      <api method="GET" url="/.well-known/jwks.json" className="com.isc.tokenservice.controller.JwksController" methodName="jwks" moduleName="token-service" />
+      <api method="GET" url="/internal/sessions/{phoneNumber}" className="com.isc.sessionmanager.service.SessionQueryController" methodName="getSession" moduleName="session-manager-service">
+        <params>
+          <param name="phoneNumber" value="test" type="PATH" dataType="String" />
         </params>
       </api>
     </cachedApis>

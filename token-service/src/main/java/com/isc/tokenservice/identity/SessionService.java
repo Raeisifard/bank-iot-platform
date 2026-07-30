@@ -1,134 +1,152 @@
 package com.isc.tokenservice.identity;
 
-import com.isc.tokenservice.dto.SessionInfo;
+import com.isc.common.enums.SessionStatus;
+import com.isc.tokenservice.config.JwtProperties;
+import com.isc.common.dto.SessionInfo;
+import com.isc.common.enums.SessionReason;
+import com.isc.tokenservice.exception.SessionNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.isc.common.constants.RedisKeys.*;
+import static com.isc.common.constants.ClientSessionFieldsName.*;
 
 @Service
 @RequiredArgsConstructor
 public class SessionService {
     private final StringRedisTemplate redis;
-
-    @Value("${bank.security.session.ttl-seconds:3600}")
-    private long sessionTtlSeconds;
+    private final JwtProperties jwtProperties;
 
     /**
      * Create authenticated session
      */
-    public SessionInfo createSession(
-            String customerId,
-            String deviceId,
-            String clientId,
-            String jwtId
-    ) {
+    public String create(SessionInfo session) {
 
-        String sessionId =
-                UUID.randomUUID().toString();
+        String key = buildSessionKey(session.getSessionId());
 
-        String key =
-                buildSessionKey(sessionId);
+        Map<String, String> values = new HashMap<>();
 
-        SessionInfo session = SessionInfo.builder()
-                .sessionId(sessionId)
-                .customerId(customerId)
-                .deviceId(deviceId)
-                .clientId(clientId)
-                .jwtId(jwtId)
-                .createdAt(Instant.now())
-                .status("ACTIVE")
+        values.put(SESSION_ID, session.getSessionId());
+        values.put(CUSTOMER_ID, session.getCustomerId());
+        values.put(DEVICE_ID, session.getDeviceId());
+        values.put(CLIENT_ID, session.getClientId());
+        values.put(REFRESH_TOKEN_ID, session.getRefreshTokenId());
+        values.put(CREATED_AT, session.getCreatedAt().toString());
+        values.put(EXPIRE_AT, session.getExpireAt().toString());
+        values.put(LAST_REFRESH_AT, session.getCreatedAt().toString());
+
+        if (session.getStatus() == null) {
+            values.put(STATUS, SessionStatus.ONLINE.name());
+        } else {
+            values.put(STATUS, session.getStatus().name());
+        }
+        if (session.getReason() != null) {
+            values.put(REASON, session.getReason().name());
+        }
+
+        redis.opsForHash().putAll(key, values);
+
+        Duration ttl = jwtProperties.getSessionIdleTtl().plus(jwtProperties.getSessionAuditTtl());
+
+        redis.expire(key, ttl);
+
+        redis.opsForValue().set(
+                buildDeviceSessionKey(session.getCustomerId(), session.getDeviceId()),
+                session.getSessionId(),
+                ttl
+        );
+
+        redis.opsForValue().set(
+                buildClientSessionKey(session.getClientId()),
+                session.getSessionId(),
+                ttl
+        );
+
+        return session.getSessionId();
+    }
+
+    /**
+     * Retrieve session
+     */
+    public SessionInfo getSession(String sessionId) {
+
+        String key = buildSessionKey(sessionId);
+        Map<Object, Object> map = redis.opsForHash().entries(key);
+        if (map.isEmpty()) {
+            return null;
+        }
+        String reason = (String) map.get(REASON);
+        return SessionInfo.builder()
+                .sessionId((String) map.get(SESSION_ID))
+                .customerId((String) map.get(CUSTOMER_ID))
+                .deviceId((String) map.get(DEVICE_ID))
+                .clientId((String) map.get(CLIENT_ID))
+                .refreshTokenId((String) map.get(REFRESH_TOKEN_ID))
+                .createdAt(Instant.parse((String) map.get(CREATED_AT)))
+                .expireAt(Instant.parse((String) map.get(EXPIRE_AT)))
+                .lastRefreshAt(Instant.parse((String) map.get(LAST_REFRESH_AT)))
+                .status(SessionStatus.valueOf((String) map.get(STATUS)))
+                .reason(reason != null ? SessionReason.valueOf(reason) : SessionReason.NONE)
                 .build();
-
-        redis.opsForHash().put(key, "sessionId", session.getSessionId());
-        redis.opsForHash().put(key, "customerId", session.getCustomerId());
-        redis.opsForHash().put(key, "deviceId", session.getDeviceId());
-        redis.opsForHash().put(key, "clientId", session.getClientId());
-        redis.opsForHash().put(key, "jwtId", session.getJwtId());
-        redis.opsForHash().put(key, "createdAt", session.getCreatedAt().toString());
-        redis.opsForHash().put(key, "status", session.getStatus());
-
-        redis.expire(
-                key,
-                Duration.ofSeconds(sessionTtlSeconds)
-        );
-
-        /*
-         * mapping:
-         * customer + device -> session
-         */
-        redis.opsForValue().set(
-                buildDeviceSessionKey(customerId, deviceId),
-                sessionId,
-                Duration.ofSeconds(sessionTtlSeconds)
-        );
-
-        /*
-         * mapping:
-         * mqtt clientId -> session
-         */
-        redis.opsForValue().set(
-                buildClientSessionKey(clientId),
-                sessionId,
-                Duration.ofSeconds(sessionTtlSeconds)
-        );
-
-        return session;
     }
 
     /**
      * Validate session existence and status
      */
     public boolean isValid(String sessionId) {
-
-        String key =
-                buildSessionKey(sessionId);
-
-        Boolean exists =
-                redis.hasKey(key);
-
-        if (!exists) {
+        SessionInfo session = getSession(sessionId);
+        if (session == null) {
             return false;
         }
-
-        Object status =
-                redis.opsForHash().get(key, "status");
-
-        return "ACTIVE".equals(status);
+        if (session.getStatus() == null || session.getStatus() != SessionStatus.ONLINE) {
+            return false;
+        }
+        if (session.getExpireAt().isBefore(Instant.now())) {
+            return false;
+        }
+        if(session.getLastRefreshAt().plus(jwtProperties.getSessionIdleTtl()).isBefore(Instant.now())) {
+            return false;
+        }
+        return !session.getLastRefreshAt().plus(jwtProperties.getSessionIdleTtl()).isBefore(Instant.now());
     }
 
     /**
      * Revoke session
      */
-    public void revokeSession(String sessionId) {
+    public void revokeSession(String sessionId, SessionReason reason) {
 
-        String key =
-                buildSessionKey(sessionId);
-
-        redis.opsForHash().put(
-                key,
-                "status",
-                "REVOKED"
-        );
-
-        redis.expire(
-                key,
-                Duration.ofMinutes(5)
-        );
+        String key = buildSessionKey(sessionId);
+        SessionInfo session = getSession(sessionId);
+        if (session == null) {
+            throw new SessionNotFoundException(key + " does not exist!");
+        }
+        if (session.getStatus() == SessionStatus.REVOKED) {
+            return;
+        }
+        redis.opsForHash().put(key, STATUS, SessionStatus.REVOKED.name());
+        redis.opsForHash().put(key, REASON, reason != null ? reason.name() : SessionReason.NONE.name());
+        redis.delete(buildDeviceSessionKey(session.getCustomerId(), session.getDeviceId()));
+        redis.delete(buildClientSessionKey(session.getClientId()));
     }
 
     /**
      * Remove session completely
      */
     public void deleteSession(String sessionId) {
-
-        redis.delete(
-                buildSessionKey(sessionId)
-        );
+        String key = buildSessionKey(sessionId);
+        SessionInfo session = getSession(sessionId);
+        if (session == null) {
+            throw new SessionNotFoundException(key + " does not exist!");
+        }
+        redis.delete(key);
+        redis.delete(buildDeviceSessionKey(session.getCustomerId(), session.getDeviceId()));
+        redis.delete(buildClientSessionKey(session.getClientId()));
     }
 
     /**
@@ -136,81 +154,70 @@ public class SessionService {
      */
     public void refreshSession(String sessionId) {
 
-        String key =
-                buildSessionKey(sessionId);
+        String key = buildSessionKey(sessionId);
+        SessionInfo session = getSession(sessionId);
+        if (session == null) {
+            throw new SessionNotFoundException(key + " do not exist!");
+        }
+        Duration ttl = jwtProperties.getSessionIdleTtl();
+        //redis.expire(key, ttl);
+        //redis.expire(buildDeviceSessionKey(session.getCustomerId(), session.getDeviceId()), ttl);
+        //redis.expire(buildClientSessionKey(session.getClientId()), ttl);
+        redis.opsForHash().put(key, LAST_REFRESH_AT, Instant.now().toString());
+    }
 
-        Boolean exists =
-                redis.hasKey(key);
+    /**
+     * Update last activity time of session.
+     * Does NOT extend session expiration.
+     */
+    public void touchSession(String sessionId) {
 
-        if (exists) {
+        String key = buildSessionKey(sessionId);
 
-            redis.expire(
-                    key,
-                    Duration.ofSeconds(sessionTtlSeconds)
+        if (!redis.hasKey(key)) {
+            throw new SessionNotFoundException(
+                    key + " does not exist!"
             );
         }
-    }
-
-    /**
-     * Get active session of a device
-     */
-    public String getDeviceSession(
-            String customerId,
-            String deviceId
-    ) {
-
-        return redis.opsForValue().get(
-                buildDeviceSessionKey(
-                        customerId,
-                        deviceId
-                )
-        );
-    }
-
-    /**
-     * Store heartbeat timestamp
-     */
-    public void heartbeat(String sessionId) {
 
         redis.opsForHash().put(
-                buildSessionKey(sessionId),
-                "lastSeen",
+                key,
+                LAST_REFRESH_AT,
                 Instant.now().toString()
         );
     }
 
     /**
+     * Get active session of a device
+     */
+    public String getDeviceSession(String customerId, String deviceId) {
+        return redis.opsForValue().get(buildDeviceSessionKey(customerId, deviceId));
+    }
+
+    /**
      * Check concurrent login
      */
-    public boolean hasActiveDeviceSession(
-            String customerId,
-            String deviceId
-    ) {
-
-        String sessionId =
-                getDeviceSession(customerId, deviceId);
-
+    public boolean hasActiveDeviceSession(String customerId, String deviceId) {
+        String sessionId = getDeviceSession(customerId, deviceId);
         if (sessionId == null) {
             return false;
         }
-
         return isValid(sessionId);
     }
 
     private String buildSessionKey(String sessionId) {
-        return "session:" + sessionId;
+        return SESSION + sessionId;
     }
 
-    private String buildDeviceSessionKey(
-            String customerId,
-            String deviceId
-    ) {
-        return "device-session:"
-                + customerId
-                + ":"
-                + deviceId;
+    private String buildDeviceSessionKey(String customerId, String deviceId) {
+        return DEVICE_SESSION + customerId + ":" + deviceId;
     }
+
     private String buildClientSessionKey(String clientId) {
-        return "client-session:" + clientId;
+        return CLIENT_SESSION + clientId;
+    }
+
+    public String getClientSession(String clientId) {
+        return redis.opsForValue().get(buildClientSessionKey(clientId));
     }
 }

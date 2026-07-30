@@ -15,14 +15,18 @@
     </parent>
     <modules>
         <module>common</module>
+        <module>common-contract</module>
+        <module>common-security</module>
         <module>common-web</module>
-        <module>contract</module>
+
+        <module>console</module>
         <module>token-service</module>
-        <module>kafka-session-service</module>
         <module>transaction-service</module>
         <module>notification-service</module>
         <module>acknowledge-service</module>
         <module>mqtt-ingress-service</module>
+        <module>session-manager-service</module>
+        <module>admin-panel</module>
 
     </modules>
     <properties>
@@ -38,6 +42,24 @@
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>2.8.17</version>
                 <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.camel.springboot</groupId>
+                <artifactId>camel-spring-boot-starter</artifactId>
+                <version>4.18.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.camel.springboot</groupId>
+                <artifactId>camel-kafka-starter</artifactId>
+                <version>4.18.2</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.camel.springboot</groupId>
+                <artifactId>camel-jackson-starter</artifactId>
+                <version>4.18.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -104,4 +126,15 @@
             </plugin>
         </plugins>
     </build>
+    <distributionManagement>
+        <repository>
+            <id>releases</id>
+            <url>http://192.168.166.37:8081/repository/ebportals-release/</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <!--<url>http://192.168.166.37:8081/repository/maven-snapshots/</url>-->
+            <url>http://192.168.166.37:8081/repository/ebportals-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

@@ -1,0 +1,72 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ingress-service
+  profiles:
+    active: dev
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+    property-naming-strategy: SNAKE_CASE
+
+  kafka:
+    bootstrap-servers: 172.16.88.115:9092
+
+    consumer:
+      group-id: banking-processor-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+      properties:
+        spring.json.trusted.packages: "*"
+
+    producer:
+      acks: all
+      retries: 5
+      compression-type: snappy
+
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+    listener:
+      ack-mode: manual_immediate
+      concurrency: 6
+      missing-topics-fatal: false
+
+  boot:
+    admin:
+      client:
+        url: http://localhost:9000
+        auto-registration: true
+        instance:
+          prefer-ip: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: mqtt-ingress-service
+    description: MQTT Ingress Gateway
+    version: 1.0.0
+
+logging:
+  level:
+    org.apache.kafka: WARN

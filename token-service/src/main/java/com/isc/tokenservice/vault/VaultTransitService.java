@@ -20,16 +20,34 @@ public class VaultTransitService {
     //--------------------------------
     // read public keys
     //--------------------------------
-    public Map<String, Object> readKeys() {
-        VaultResponse response = vaultTemplate.read("transit/keys/" + keyName);
+    // IMPORTANT: the export "type" segment must be "public-key".
+    // "signing-key" (previously used here) exports the PRIVATE
+    // key material meant for external signing — never expose
+    // that from a public/JWKS-facing endpoint.
+    public Map<String, Object> readPublicKeys() {
+        VaultResponse response =
+                vaultTemplate.read("transit/export/public-key/" + keyName);
+
+        if (response == null) {
+            throw new IllegalStateException(
+                    "Vault returned null response for public-key export of " + keyName);
+        }
+
         return response.getData();
     }
 
     public int rotateKey() {
         vaultTemplate.write("transit/keys/" + keyName + "/rotate", Map.of());
+
         VaultResponse response = vaultTemplate.read("transit/keys/" + keyName);
-        Map<String, Object> data =  response.getData();
-        assert data != null;
+
+        if (response == null || response.getData() == null) {
+            throw new IllegalStateException(
+                    "Vault returned no data after rotating key " + keyName);
+        }
+
+        Map<String, Object> data = response.getData();
+
         return Integer.parseInt(
                 data.get("latest_version").toString()
         );

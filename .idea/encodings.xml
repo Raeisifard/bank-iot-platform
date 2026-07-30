@@ -2,11 +2,15 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/acknowledge-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/admin-panel/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/auth-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/auth-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common-contract/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common-security/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common-web/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/console/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/contract/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/contract/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/kafka-session-service/src/main/java" charset="UTF-8" />
@@ -14,6 +18,8 @@
     <file url="file://$PROJECT_DIR$/mqtt-ingress-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/notification-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/notification-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/security-common/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/session-manager-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/token-service/src/main/java" charset="UTF-8" />

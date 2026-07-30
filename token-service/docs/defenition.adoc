@@ -1,0 +1,39 @@
+= Token Service
+Behnam Raeisifard <b_raeisifard@isc.co.ir>
+3.0, June 15, 2026: Token service article
+:toc:
+:icons: font
+:url-quickref: https://docs.asciidoctor.org/asciidoc/latest/syntax-quick-reference/
+
+Token service module is for creating and managing JWT tokens, refresh tokens, and client session.
+
+== Controller
+Controller package has *jwks*, *token* and *refresh* endpoints.
+
+== Session service
+Session service is for creating, retrieving, validating, revoking, deleting, refreshing and inquiring active session for a client.
+
+== Refresh token service
+*RefreshTokenService* has main below methods:
+
+* create
+* validate
+* get
+* revoke
+* revokeBySession
+* rotate
+
+The Original _refreshToken_ is created and sent to the client through calling _token_ and _refresh_ _API_. The *RTI* for that is in *JWT* and held in *Redis* also. The Hash of original _refreshToken_ is in Redis pointed by RTI.
+====
+    security:
+      jwt:
+        refresh-token-ttl: P30D
+        refresh-token-audit-ttl: P10D
+====
+* _refresh-token-ttl_ specify the refresh token active duration, Witch it'll be expired after that.
+* _refresh-token-audit-ttl an excess duration for maintaining expired refresh tokens in redis for auditory.
+
+==Health check & Actuator
+----
+$ curl http://localhost:8083/actuator/health
+----

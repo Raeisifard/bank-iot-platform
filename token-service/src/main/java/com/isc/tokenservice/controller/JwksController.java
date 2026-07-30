@@ -75,11 +75,19 @@ public class JwksController {
         }
 
         //--------------------------------
-        // vault keys
+        // vault public keys (NOTE: must use the "public-key" export
+        // type in VaultTransitService, never "signing-key" — that
+        // export type returns the PRIVATE key material)
         //--------------------------------
 
-        Map<String, Object> response = vault.readKeys();
+        Map<String, Object> response = vault.readPublicKeys();
 
+        if (response == null || response.get("keys") == null) {
+            throw new IllegalStateException(
+                    "Vault returned no key data for transit key");
+        }
+
+        @SuppressWarnings("unchecked")
         Map<String, Object> keys = (Map<String, Object>) response.get("keys");
 
         List<Map<String, Object>> result = new ArrayList<>();
@@ -112,11 +120,7 @@ public class JwksController {
                 // vault public key
                 //--------------------------------
 
-                Map<String, Object> keyData = (Map<String, Object>) value;
-
-                String pem = (String) keyData.get("public_key");
-
-                RSAPublicKey key = parsePem(pem);
+                RSAPublicKey key = parsePem(value.toString());
 
                 //--------------------------------
                 // jwk
@@ -155,7 +159,8 @@ public class JwksController {
 
             } catch (Exception ex) {
 
-                throw new RuntimeException(ex);
+                throw new RuntimeException(
+                        "Failed to build JWK for vault key version " + version, ex);
             }
         });
 
@@ -194,6 +199,9 @@ public class JwksController {
                 .replace(
                         "-----END PUBLIC KEY-----",
                         "")
+                // FIX: this was previously "¥¥s" (a corrupted "\\s"),
+                // so whitespace/newlines from the PEM were never
+                // stripped and Base64 decoding failed.
                 .replaceAll("\\s", "");
 
         byte[] bytes =

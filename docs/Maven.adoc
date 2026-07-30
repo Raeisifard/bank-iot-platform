@@ -1,0 +1,33 @@
+= Some __MAVEN__ commands
+:toc:
+:icons: font
+
+If you just want *Maven* to re-download all project dependencies from *Nexus*, here are the most usefule commands:
+
+== Force Maven to check remote repositories (Recommended)
+----
+mvn clean install -U
+----
+The -U option forces *Maven* to check remote repositories for updated releases and snapshots instead of relying solely on the local cach.
+
+== Resolve dependencies only
+----
+mvn dependency:resolve -U
+----
+This command downloads all required dependencies without building the project.
+
+== Purge the local repository cache
+If you suspect that a dependency in your local Maven cache is corrupted:
+----
+mvn dependency:purge-local-repository
+----
+Or purge only artifacts from a specific group:
+----
+mvn dependency:purge-local-repository \
+  -DmanualInclude=com.isc
+----
+Then run:
+----
+mvn clean install -U
+----
+

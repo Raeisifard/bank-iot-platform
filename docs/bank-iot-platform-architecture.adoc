@@ -1,0 +1,205 @@
+= معماری سامانه Bank IoT Platform
+:doctype: article
+:toc: left
+:toclevels: 3
+:sectnums:
+:source-highlighter: rouge
+:lang: fa
+
+== مقدمه
+
+این سند خلاصه‌ی معماری کلی سامانه *Bank IoT Platform* را بر اساس بررسی کد و پیکربندی موجود در مخزن پروژه ارائه می‌دهد. پلتفرم بر پایه‌ی +Spring Boot 3.5+ و +Java 21+ توسعه یافته و از معماری میکروسرویس با ارتباط ناهمگام (asynchronous) از طریق *Apache Kafka* استفاده می‌کند.
+
+== ماژول‌های پروژه
+
+پروژه به صورت یک Maven Multi-Module با ماژول‌های زیر ساخت‌دهی شده است:
+
+[cols="1,3", options="header"]
+|===
+| ماژول | نقش
+
+| `mqtt-ingress-service`
+| دریافت رویدادهای وب‌هوک از بروکر MQTT (EMQX) و انتشار آن‌ها روی Kafka
+
+| `kafka-session-service`
+| مصرف رویدادهای اتصال کلاینت و مدیریت وضعیت Session در Redis
+
+| `token-service`
+| صدور و تمدید JWT، مدیریت Session/Refresh Token، امضای کلید از طریق HashiCorp Vault
+
+| `acknowledge-service`
+| پردازش پیام‌های ACK با Apache Camel، بررسی Idempotency و مکانیزم Retry
+
+| `transaction-service`
+| ارائه‌ی API تراکنش‌ها (محافظت‌شده با JWT)
+
+| `notification-service`
+| اسکلت اولیه سرویس اعلان‌ها (هنوز پیاده‌سازی نشده)
+
+| `admin-panel`
+| سرور Spring Boot Admin برای مانیتورینگ کلیه سرویس‌ها
+
+| `common`
+| ابزارها و ثابت‌های مشترک (`KafkaTopics`, `RedisKeys`, ...)
+
+| `common-contract`
+| مدل‌های قرارداد رویدادهای Kafka (`ClientConnectedEvent`, `JwtInfo`, ...)
+
+| `common-security`
+| اعتبارسنجی JWT و اتصال به Vault
+
+| `common-web`
+| فیلترهای امنیتی وب، `JwtAuthenticationFilter`، پیکربندی امنیت مشترک
+
+| `console`
+| ماژول توسعه/آزمایشی (Camel DSL sandbox)
+
+| `docs`
+| مستندات و کالکشن Postman
+|===
+
+== اجزای زیرساختی
+
+* *Kafka* (`172.16.88.115:9092`) — گذرگاه اصلی پیام‌رسانی بین سرویس‌ها
+* *Redis* (`172.16.88.115:6379`) — ذخیره‌سازی مشترک Session، Idempotency Key و اطلاعات Refresh Token
+* *HashiCorp Vault* (`172.16.88.115:8200`, Transit Engine) — تولید و امضای کلیدهای JWT
+* *EMQX* — بروکر MQTT برای ارتباط با اپ موبایل/دستگاه‌های IoT
+* *Spring Boot Admin* (پورت 9000) — مانیتورینگ instance‌های در حال اجرا
+
+== جریان‌های اصلی داده
+
+=== ۱. اتصال کلاینت (Session)
+. اپ موبایل/دستگاه به EMQX متصل می‌شود (MQTT).
+. EMQX رویداد `client.connected` را به صورت Webhook به `mqtt-ingress-service` ارسال می‌کند.
+. `mqtt-ingress-service` رویداد را روی توپیک Kafka +mqtt.client.connected+ منتشر می‌کند.
+. `kafka-session-service` این توپیک را مصرف کرده و Session کلاینت را در Redis ذخیره می‌کند.
+
+=== ۲. احراز هویت و صدور توکن
+. کلاینت با فراخوانی +POST /api/v1/auth/token+ در `token-service` وارد می‌شود.
+. `token-service` توکن دسترسی/تمدید را تولید کرده و برای امضا از Vault Transit استفاده می‌کند.
+. اطلاعات Session و Refresh Token در Redis ذخیره می‌شود.
+. کلید عمومی از طریق +/.well-known/jwks.json+ در دسترس سایر سرویس‌ها قرار می‌گیرد.
+
+=== ۳. تأیید دریافت پیام (ACK)
+. کلاینت با فراخوانی API در `acknowledge-service`، ACK پیام را روی توپیک Kafka +banking.ack+ منتشر می‌کند.
+. یک Camel Route آن را مصرف کرده، اعتبارسنجی و بررسی Idempotency (از طریق Redis) انجام می‌دهد.
+. در صورت شکست، پیام از طریق توپیک‌های +banking.retry.2s+ / +banking.retry.5s+ با تأخیر به +banking.tx.in+ بازگردانده می‌شود.
+
+=== ۴. تراکنش‌ها
+`transaction-service` نقطه‌ی API برای دریافت تراکنش‌های کاربر را ارائه می‌دهد که با JWT محافظت شده است (از طریق `common-security`/`common-web`).
+
+=== ۵. اعلان‌ها (در حال توسعه)
+`notification-service` قرار است مصرف‌کننده‌ی توپیک‌های +notification.*+ باشد؛ در حال حاضر تنها اسکلت اولیه ماژول (فایل pom) ایجاد شده است.
+
+== دیاگرام معماری (Mermaid)
+
+[source,mermaid]
+----
+flowchart TB
+    subgraph Client["لایه کلاینت"]
+        Mobile["اپ موبایل / دستگاه IoT"]
+    end
+
+    subgraph Broker["MQTT Broker"]
+        EMQX["EMQX"]
+    end
+
+    Mobile -- "MQTT pub/sub" --> EMQX
+    Mobile -- "REST: login/refresh" --> TokenSvc
+    Mobile -- "REST: تراکنش‌ها" --> TransSvc
+    Mobile -- "REST: ارسال ACK" --> AckSvc
+
+    EMQX -- "Webhook: client.connected" --> MqttIngress["mqtt-ingress-service :8082"]
+
+    subgraph KafkaBus["Kafka Broker"]
+        T1(("mqtt.client.connected"))
+        T2(("banking.ack"))
+        T3(("banking.retry.2s/5s"))
+        T4(("banking.tx.in"))
+        T5(("notification.*"))
+    end
+
+    MqttIngress -- "publish" --> T1
+    T1 -- "consume" --> SessionSvc["kafka-session-service :8084"]
+    SessionSvc -- "ذخیره session" --> Redis1[("Redis")]
+
+    AckSvc["acknowledge-service :8084\n(Apache Camel routes)"]
+    T2 -- "consume" --> AckSvc
+    AckSvc -- "idempotency + وضعیت تراکنش" --> Redis1
+    T3 -- "delay retry" --> T4
+    AckSvc -.-> T3
+
+    subgraph TokenSvc_group["token-service"]
+        TokenSvc["token-service"]
+    end
+    TokenSvc -- "Refresh Token / Session" --> Redis1
+    TokenSvc -- "امضای کلید JWT (Transit)" --> Vault[("HashiCorp Vault")]
+    TokenSvc -- "JWKS" --> Mobile
+
+    TransSvc["transaction-service"]
+    TransSvc -- "اعتبارسنجی JWT" --> CommonSec["common-security / common-web"]
+    AckSvc -- "اعتبارسنجی JWT" --> CommonSec
+    TokenSvc -- "اعتبارسنجی JWT" --> CommonSec
+
+    NotifSvc["notification-service\n(در حال توسعه)"]
+    T5 -.-> NotifSvc
+
+    subgraph Monitoring["مانیتورینگ"]
+        Admin["admin-panel :9000\n(Spring Boot Admin)"]
+    end
+
+    MqttIngress -. register .-> Admin
+    SessionSvc -. register .-> Admin
+    AckSvc -. register .-> Admin
+    TokenSvc -. register .-> Admin
+    TransSvc -. register .-> Admin
+
+    subgraph SharedLibs["کتابخانه‌های مشترک (Common Libs)"]
+        Common["common"]
+        Contract["common-contract\n(Kafka Event Models)"]
+    end
+
+    Contract -.-> T1
+    Contract -.-> T2
+----
+
+NOTE: برای رندر شدن دیاگرام بالا در خروجی HTML/PDF، باید افزونه‌ی `asciidoctor-diagram` (با پشتیبانی Mermaid از طریق Kroki یا mermaid-cli) فعال باشد. در غیر این صورت، بلوک به صورت کد متنی نمایش داده می‌شود.
+
+== نکات و مشاهدات معماری
+
+* *acknowledge-service* از Apache Camel برای تعریف Route روی Kafka استفاده می‌کند، در حالی که *kafka-session-service* از `@KafkaListener` استاندارد Spring Kafka بهره می‌برد. این ناهم‌سانی در الگوی مصرف پیام بین دو سرویس مشابه، یکی از نکات قابل بازبینی در معماری است.
+* *Redis* به عنوان یک منبع داده‌ی مشترک بین سه سرویس (`token-service`, `acknowledge-service`, `kafka-session-service`) به‌کار می‌رود؛ این موضوع یک نوع Coupling ضمنی بین سرویس‌ها ایجاد می‌کند که باید در طراحی آینده مدنظر باشد.
+* *notification-service* هنوز عملاً پیاده‌سازی نشده و صرفاً به عنوان ماژول خالی در `pom.xml` ریشه تعریف شده است.
+* *transaction-service* در حال حاضر مستقل از Kafka است و فقط یک Endpoint REST محافظت‌شده با JWT دارد.
+* آدرس‌های زیرساختی (Kafka، Redis، Vault) در فایل‌های `application.yml` به صورت IP ثابت (`172.16.88.115`) پیکربندی شده‌اند که برای محیط Production نیاز به بازبینی (مانند Service Discovery یا Environment Variable) دارد.
+
+== پیوست: توپیک‌های Kafka تعریف‌شده
+
+[cols="1,2", options="header"]
+|===
+| دامنه | نمونه توپیک‌ها
+
+| Auth
+| `auth.login.success`, `auth.logout.success`, `auth.token.refresh`, `auth.token.revoked`
+
+| Session
+| `session.connected`, `session.disconnected`, `session.expired`, `session.kicked`
+
+| Device
+| `device.registered`, `device.blocked`, `device.changed`
+
+| MQTT
+| `mqtt.client.connected`, `mqtt.client.disconnected`, `mqtt.message.received`
+
+| Transaction
+| `transaction.created`, `transaction.completed`, `transaction.failed`
+
+| Payment / Transfer
+| `payment.created`, `payment.completed`, `transfer.created`, `transfer.completed`
+
+| Notification
+| `notification.created`, `notification.sent`, `notification.delivered`, `notification.failed`
+
+| Fraud / Audit
+| `fraud.detected`, `fraud.blocked`, `audit.event`
+|===

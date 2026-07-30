@@ -1,0 +1,89 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: session-manager-service
+
+  data:
+    redis:
+      host: ${REDIS_HOST:172.16.88.115}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:StrongRedisPassword}
+      database: ${REDIS_DATABASE:0}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:172.16.88.115:9092}
+    consumer:
+      group-id: session-manager-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "com.isc.sessionmanager.model"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.isc.sessionmanager.model.ConnectionEvent
+        max.poll.records: 500
+        max.poll.interval.ms: 300000
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    listener:
+      ack-mode: manual_immediate
+      concurrency: 3
+      missing-topics-fatal: false
+
+  boot:
+    admin:
+      client:
+        url: http://localhost:9000
+        auto-registration: true
+        instance:
+          prefer-ip: true
+app:
+  kafka:
+    topic:
+      connection-events: ${CONNECTION_EVENTS_TOPIC:client-connection-events}
+      dead-letter: ${CONNECTION_EVENTS_DLT:client-connection-events.DLT}
+    retry:
+      max-attempts: 3
+      backoff-ms: 1000
+  session:
+    key-prefix: "session:"
+    phone-index-prefix: "session:phone:"
+    # TTL acts as a safety-net expiry in case a disconnect event is ever lost.
+    # Should be comfortably larger than the EMQX keepalive interval.
+    ttl-seconds: ${SESSION_TTL_SECONDS:180}
+    redis:
+      session-prefix: "session:"
+      client-sessions-prefix: "client-sessions:"
+      online-users-key: online-users
+      default-ttl-hours: 24
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*" #health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always #when-authorized
+
+info:
+  app:
+    name: kafka-session-service
+    description: Kafka session service
+    version: 1.0.0
+
+logging:
+  level:
+    com.isc.sessionmanager: INFO
+    org.apache.kafka: WARN

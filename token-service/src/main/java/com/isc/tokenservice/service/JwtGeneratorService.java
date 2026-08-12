@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isc.common.enums.JwtTokenType;
 import com.isc.tokenservice.config.JwtProperties;
 import com.isc.tokenservice.dto.AuthTokens;
-import com.isc.tokenservice.dto.ClientAttributes;
+import com.isc.common.dto.ClientAttributes;
 import com.isc.tokenservice.dto.JwtKeyPolicy;
 import com.isc.tokenservice.vault.VaultTransitJwtSigner;
 import com.isc.tokenservice.vault.JwtKeyPolicyService;
@@ -52,25 +52,26 @@ public class JwtGeneratorService {
 
         // ---------------- PAYLOAD ----------------
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("sub", customerId);
+        payload.put("iss", properties.getIssuer());
+        payload.put("aud", properties.getAudience());
         payload.put("iat", now.getEpochSecond());
         payload.put("exp",
                 now.plusSeconds(properties.getAccessTokenTtl().toSeconds()).getEpochSecond()
         );
 
         //payload.put("jti", accessJti);
-        payload.put("sid", sessionId);
+        //payload.put("sid", sessionId);
 
         // مهم برای trace کامل
         //payload.put("rti", refreshId);
 
         ClientAttributes attrs = new ClientAttributes(
-                properties.getIssuer(),
-                properties.getAudience(),
                 jti,
                 sessionId,
                 deviceId,
-                clientId
+                clientId,
+                customerId,
+                jtt.name()
         );
 
         payload.put("client_attrs", attrs);

@@ -1,6 +1,6 @@
 package com.isc.sessionmanager.config;
 
-import com.isc.sessionmanager.model.ConnectionEvent;
+import com.isc.contract.event.session.ClientConnectedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -41,7 +41,7 @@ public class KafkaConsumerConfig {
     private long backoffMs;
 
     @Bean
-    public ConsumerFactory<String, ConnectionEvent> connectionEventConsumerFactory() {
+    public ConsumerFactory<String, ClientConnectedEvent> connectionEventConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
@@ -49,7 +49,7 @@ public class KafkaConsumerConfig {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         props.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.isc.sessionmanager.model");
-        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, ConnectionEvent.class.getName());
+        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, ClientConnectedEvent.class.getName());
         props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -93,12 +93,12 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory<String, ConnectionEvent>
+    public org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory<String, ClientConnectedEvent>
     connectionEventKafkaListenerContainerFactory(
-            ConsumerFactory<String, ConnectionEvent> connectionEventConsumerFactory,
+            ConsumerFactory<String, ClientConnectedEvent> connectionEventConsumerFactory,
             DefaultErrorHandler kafkaErrorHandler) {
 
-        var factory = new org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory<String, ConnectionEvent>();
+        var factory = new org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory<String, ClientConnectedEvent>();
         factory.setConsumerFactory(connectionEventConsumerFactory);
         factory.setCommonErrorHandler(kafkaErrorHandler);
         factory.setConcurrency(3);

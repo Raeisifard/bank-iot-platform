@@ -1,6 +1,6 @@
 package com.isc.sessionmanager.service;
 
-import com.isc.sessionmanager.model.ClientSession;
+import com.isc.common.dto.ClientSession;
 import com.isc.sessionmanager.repository.SessionRedisRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

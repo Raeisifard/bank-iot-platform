@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.isc.common.constants.KafkaTopics;
 import com.isc.contract.event.KafkaEventFactory;
 import com.isc.contract.event.session.ClientConnectedEvent;
+import com.isc.contract.event.session.ClientDisconnectedEvent;
 import com.isc.mqtt.ingress.dto.EmqxClientConnectedRequest;
+import com.isc.mqtt.ingress.dto.EmqxClientDisconnectedRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -91,9 +93,9 @@ public class EmqxWebhookController {
                                 request.getJwt() != null
                                         ? request.getJwt().getSid()
                                         : request.getClientId())
-                        .timestamp(request.getTimestamp())
+                        .connectedAt(request.getConnectedAt())
                         .channel(channel)
-                        .actor(request.getJwt().getAud())
+                        //.actor(request.getJwt().getAud())
                         .clientId(request.getClientId())
                         .username(request.getUsername())
                         .ipAddress(request.getIpAddress())
@@ -106,18 +108,92 @@ public class EmqxWebhookController {
                         .writeValueAsString(event));
 
         kafkaTemplate.send(
-                KafkaTopics.MQTT_CONNECTED,
+                KafkaTopics.MQTT_CONNECTION,
                 event.getClientId(),
                 event);
 
         return ResponseEntity.ok().build();
     }
-    @PostMapping("/test")
-    public ResponseEntity<String> test(
-            @RequestBody(required = false) String body) {
 
-        log.info("BODY={}", body);
+    @PostMapping("/{channel}/client/disconnected")
+    @Operation(
+            summary = "Client Disconnected Event",
+            description = """
+                    Receives EMQX client.disconnected webhook events and publishes
+                    them to Kafka topic mqtt.client.disconnected.
+                    """
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Event received successfully"
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Invalid request payload"
+    )
+    public ResponseEntity<Void> disconnected(
+            @Parameter(
+                    description = "EMQX Client Disconnected Event Payload",
+                    required = true
+            )
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Client disconnection event",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(
+                                    implementation = EmqxClientDisconnectedRequest.class
+                            ),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "timestamp": 1781100207683,
+                                              "client_id": "CUST-1002",
+                                              "username": "behnam",
+                                              "ip_address": "192.168.218.99:54071",
+                                              "protocol": 5,
+                                              "jwt": {
+                                                "sid": "SID-123",
+                                                "jti": "JTI-123",
+                                                "iss": "bank-auth",
+                                                "did": "DEVICE-1",
+                                                "cid": "MOBILE-APP",
+                                                "aud": "mobile-app"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            )
+            @RequestBody EmqxClientDisconnectedRequest request, @PathVariable String channel)
+            throws JsonProcessingException {
 
-        return ResponseEntity.ok("OK");
+        ClientDisconnectedEvent event =
+                kafkaEventFactory
+                        .clientDisconnected(
+                                request.getJwt() != null
+                                        ? request.getJwt().getSid()
+                                        : request.getClientId())
+                        .connectedAt(request.getConnectedAt())
+                        .disconnectedAt(request.getDisconnectedAt())
+                        .channel(channel)
+                        //.actor(request.getJwt().getAud())
+                        .clientId(request.getClientId())
+                        .username(request.getUsername())
+                        .ipAddress(request.getIpAddress())
+                        .protocol(request.getProtocol())
+                        .jwt(request.getJwt())
+                        .build();
+
+        log.info("EVENT =\n{}",
+                objectMapper.writerWithDefaultPrettyPrinter()
+                        .writeValueAsString(event));
+
+        kafkaTemplate.send(
+                KafkaTopics.MQTT_CONNECTION,
+                event.getClientId(),
+                event);
+
+        return ResponseEntity.ok().build();
     }
+
 }

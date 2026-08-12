@@ -72,6 +72,9 @@ public final class KafkaTopics {
     // MQTT DOMAIN
     // =====================================================
 
+    public static final String MQTT_CONNECTION =
+            "mqtt.client.connection"; //All connected/disconnected event routed to this topic to prevent stale phenomena!
+
     public static final String MQTT_CONNECTED =
             "mqtt.client.connected";
 
@@ -86,6 +89,9 @@ public final class KafkaTopics {
 
     public static final String MQTT_MESSAGE_RECEIVED =
             "mqtt.message.received";
+
+    public static final String MQTT_MESSAGE_SEND =
+            "mqtt.message.send";
 
     public static final String MQTT_MESSAGE_DELIVERED =
             "mqtt.message.delivered";
@@ -182,4 +188,24 @@ public final class KafkaTopics {
 
     public static final String AUDIT_EVENT =
             "audit.event";
+
+    // =====================================================
+    // ACKNOWLEDGE DOMAIN
+    // =====================================================
+
+    public static final String ACK_EVENT =
+            "ack.event";
+
+    // =====================================================
+    // SEND & RETRY DOMAIN
+    // =====================================================
+
+    public static final String TX_IN_EVENT =
+            "banking.tx.in";
+
+    public static final String RETRY_2S_EVENT =
+            "banking.retry.2s";
+
+    public static final String RETRY_5S_EVENT =
+            "banking.retry.5s";
 }

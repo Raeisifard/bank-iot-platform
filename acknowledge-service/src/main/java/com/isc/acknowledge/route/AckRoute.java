@@ -3,6 +3,7 @@ package com.isc.acknowledge.route;
 import com.isc.acknowledge.dto.AckRequest;
 import com.isc.acknowledge.processor.AckValidatorProcessor;
 import com.isc.acknowledge.service.AckService;
+import com.isc.common.constants.KafkaTopics;
 import lombok.RequiredArgsConstructor;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ public class AckRoute extends RouteBuilder {
     @Override
     public void configure() {
 
-        from("kafka:banking.ack")
+        from("kafka:" + KafkaTopics.ACK_EVENT)
                 .routeId("ack-route")
 
                 .unmarshal().json(AckRequest.class)
@@ -31,8 +32,7 @@ public class AckRoute extends RouteBuilder {
                 .otherwise()
                 .process(exchange -> {
 
-                    AckRequest ack =
-                            exchange.getProperty("ack", AckRequest.class);
+                    AckRequest ack = exchange.getProperty("ack", AckRequest.class);
 
                     ackService.handle(ack);
 

@@ -14,10 +14,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(
-        name = "EmqxClientConnectedRequest",
-        description = "Payload received from EMQX client.connected webhook."
+        name = "EmqxClientDisconnectedRequest",
+        description = "Payload received from EMQX client.disconnected webhook."
 )
-public class EmqxClientConnectedRequest {
+public class EmqxClientDisconnectedRequest {
 
     @JsonProperty("connected_at")
     @Schema(
@@ -25,6 +25,13 @@ public class EmqxClientConnectedRequest {
             example = "1781100207683"
     )
     private Long connectedAt;
+
+    @JsonProperty("disconnected_at")
+    @Schema(
+            description = "Timestamp received from EMQX.",
+            example = "1781100207883"
+    )
+    private Long disconnectedAt;
 
     @JsonProperty("client_id")
     @Schema(
@@ -51,9 +58,6 @@ public class EmqxClientConnectedRequest {
             example = "5"
     )
     private Integer protocol;
-
-    @JsonIgnore
-    private String mountpoint;
 
     @Schema(
             description = "JWT information extracted during authentication."

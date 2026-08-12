@@ -1,7 +1,7 @@
 package com.isc.sessionmanager.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.isc.sessionmanager.model.ClientSession;
+import com.isc.common.dto.ClientSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;

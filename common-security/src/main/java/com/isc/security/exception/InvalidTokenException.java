@@ -12,4 +12,8 @@ public class InvalidTokenException
     public InvalidTokenException() {
         super("Invalid token");
     }
+
+    public InvalidTokenException(String invalidJwtClaims, Exception e) {
+        super(invalidJwtClaims, e);
+    }
 }

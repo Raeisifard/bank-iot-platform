@@ -1,4 +1,4 @@
-package com.isc.tokenservice.exception;
+package com.isc.common.exception;
 
 public class SessionNotFoundException
         extends RuntimeException {

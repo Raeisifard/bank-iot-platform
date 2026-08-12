@@ -18,11 +18,11 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getCredentials() {
-        return null;
+        return claims;
     }
 
     @Override
     public Object getPrincipal() {
-        return claims;
+        return claims.getCa();
     }
 }

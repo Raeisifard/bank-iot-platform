@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package com.isc.grpc.session;
+
+option java_package = "com.isc.grpc.session";
+option java_multiple_files = true;
+
+import "google/protobuf/empty.proto";
+
+// Mirrors com.isc.common.dto.SessionInfo. Timestamps are epoch millis
+// (0 means "not set") since proto3 has no native nullable primitives.
+message SessionInfo {
+    string session_id = 1;
+    string customer_id = 2;
+    string device_id = 3;
+    string client_id = 4;
+    string username = 5;
+    string ip_address = 6;
+    string node = 7;
+    int32 protocol = 8;
+    string refresh_token_id = 9;
+    int64 created_at = 10;
+    int64 expire_at = 11;
+    int64 last_refresh_at = 12;
+    int64 last_event_timestamp = 13;
+    string status = 14; // SessionStatus enum name
+    string reason = 15;  // SessionReason enum name
+}
+
+message CreateSessionRequest {
+    SessionInfo session = 1;
+}
+
+message SessionIdRequest {
+    string session_id = 1;
+}
+
+message SessionReply {
+    bool found = 1;
+    SessionInfo session = 2;
+}
+
+message BoolReply {
+    bool value = 1;
+}
+
+message RevokeSessionRequest {
+    string session_id = 1;
+    string reason = 2; // SessionReason enum name, optional
+}
+
+message DeviceSessionRequest {
+    string customer_id = 1;
+    string device_id = 2;
+}
+
+message ClientIdRequest {
+    string client_id = 1;
+}
+
+// Empty session_id means "not found"
+message SessionIdReply {
+    string session_id = 1;
+}
+
+service SessionGrpcService {
+    rpc CreateSession(CreateSessionRequest) returns (SessionIdReply);
+    rpc GetSession(SessionIdRequest) returns (SessionReply);
+    rpc IsValid(SessionIdRequest) returns (BoolReply);
+    rpc RevokeSession(RevokeSessionRequest) returns (google.protobuf.Empty);
+    rpc DeleteSession(SessionIdRequest) returns (google.protobuf.Empty);
+    rpc RefreshSession(SessionIdRequest) returns (google.protobuf.Empty);
+    rpc TouchSession(SessionIdRequest) returns (google.protobuf.Empty);
+    rpc GetDeviceSession(DeviceSessionRequest) returns (SessionIdReply);
+    rpc HasActiveDeviceSession(DeviceSessionRequest) returns (BoolReply);
+    rpc GetClientSession(ClientIdRequest) returns (SessionIdReply);
+}

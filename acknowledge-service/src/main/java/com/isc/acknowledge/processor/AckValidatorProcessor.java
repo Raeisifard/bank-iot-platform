@@ -38,8 +38,7 @@ public class AckValidatorProcessor implements Processor {
 
         String key = "ack:processed:" + ack.getTransactionId();
 
-        Boolean alreadyProcessed =
-                redis.hasKey(key);
+        Boolean alreadyProcessed = redis.hasKey(key);
 
         if (alreadyProcessed) {
             exchange.setProperty("duplicateAck", true);

@@ -15,19 +15,20 @@ Kafka Consumer Group
 Sample Message to Kafka
 ----
 {
-	"timestamp": 1780842949578,
-	"username": "CUST-1001",
-	"protocol": 5,
-	"jwt": {
-		"sid": "SID-b1498a6e-793e-4dbc-96ae-c5534aadeff2",
-		"jti": "JTI-55addf1f-f243-4ad9-ae3e-4da6d1ac16ff",
-		"iss": "bank-auth",
-		"did": "DEVICE-1",
-		"cid": "MOBILE-APP",
-		"aud": "mobile-app"
-	},
-	"client_id": "CUST-1001",
-	"ip_address": "192.168.218.99:63168"
+  "client_id": "C65765",
+  "username": "UserId643",
+  "ip_address": "192.168.218.99:56351",
+  "protocol": "5",
+  "mountpoint": "undefined",
+  "connected_at": "1786187030972",
+  "jwt": {
+    "sub":"user-1004",
+    "sid":"SID-53bab290-6ce9-4c96-bceb-1ed73bfd7574",
+    "jtt":"ACCESS_TOKEN",
+    "jti":"ACT-d22113a2-4257-4584-990f-28a081490483",
+    "did":"d12345",
+    "cid":"c12345"
+    }
 }
 ----
 ----

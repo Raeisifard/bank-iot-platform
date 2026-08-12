@@ -2,7 +2,8 @@ package com.isc.acknowledge.controller;
 
 import com.isc.acknowledge.dto.AckRequest;
 import com.isc.acknowledge.service.RedisPendingService;
-import com.isc.security.model.JwtClaims;
+import com.isc.common.constants.KafkaTopics;
+import com.isc.common.dto.ClientAttributes;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +28,12 @@ public class AckController {
     @Operation(summary = "Delete Transaction")
     public ResponseEntity<String> deleteAck(
             @PathVariable String messageId,
-            @AuthenticationPrincipal JwtClaims claims) {
+            @AuthenticationPrincipal ClientAttributes ca) {
 
         log.info(
                 "ACK received. messageId={}, clientId={}",
                 messageId,
-                claims.getClientId());
+                ca.getCid());
 
         pendingService.removePending(messageId);
 
@@ -44,26 +45,30 @@ public class AckController {
     @Operation(summary = "Send ACK to Kafka")
     public void publishAck(
             @RequestBody AckRequest request,
-            @AuthenticationPrincipal JwtClaims claims) {
+            @AuthenticationPrincipal ClientAttributes ca) {
+        if (ca.getCid().equals(request.getClientId())) {
 
-        log.info(
-                "Publish ACK. clientId={}",
-                claims.getClientId());
+            log.info(
+                    "Publish ACK. clientId={}",
+                    ca.getCid());
 
-        kafkaTemplate.send(
-                "banking.ack",
-                request);
+            kafkaTemplate.send(
+                    KafkaTopics.ACK_EVENT,
+                    request);
+        } else {
+            log.warn(
+                    "Publish ACK. clientId={} in claims is not equal with request clientId={}",
+                    ca.getCid(), request.getClientId());
+        }
     }
 
     @GetMapping("/ack")
     public ResponseEntity<String> ack(
             Authentication authentication) {
 
-        JwtClaims claims =
-                (JwtClaims) authentication.getPrincipal();
+        ClientAttributes ca = (ClientAttributes) authentication.getPrincipal();
 
-        String clientId =
-                claims.getClientId();
+        String clientId = ca.getCid();
 
         return ResponseEntity.ok(clientId);
     }

@@ -2,6 +2,7 @@ package com.isc.sessionmanager.kafka;
 
 import com.isc.common.constants.KafkaTopics;
 import com.isc.contract.event.session.ClientConnectedEvent;
+import com.isc.contract.event.session.ClientDisconnectedEvent;
 import com.isc.sessionmanager.service.SessionService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -16,16 +17,6 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Consumes client connection lifecycle events published by the Kafka Ingress
- * Service (topic: app.kafka.topic.connection-events, default
- * "client-connection-events").
- *
- * Acknowledgment is manual and only committed after the session mutation
- * succeeds, so a processing failure leaves the offset uncommitted and the
- * message gets redelivered / routed to the DLT per the configured
- * DefaultErrorHandler (see KafkaConsumerConfig).
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -35,42 +26,108 @@ public class ConnectionEventListener {
     private final Validator validator;
 
     @KafkaListener(
-            //topics = "${app.kafka.topic.connection-events}",
-            topics = KafkaTopics.MQTT_CONNECTED,
+            topics = KafkaTopics.MQTT_CONNECTION,
             containerFactory = "connectionEventKafkaListenerContainerFactory"
     )
-    public void onConnectionEvent(ConsumerRecord<String, ClientConnectedEvent> record, Acknowledgment ack) {
-        ClientConnectedEvent event = record.value();
+    public void onConnectionEvent(
+            ConsumerRecord<String, Object> record,
+            Acknowledgment ack) {
+
+        Object event = record.value();
 
         try {
-            validate(event);
-            log.debug("Received connection event: key={} partition={} offset={} event={}",
-                    record.key(), record.partition(), record.offset(), event);
+            switch (event) {
 
-            sessionService.handleConnectionEvent(event);
+                case ClientConnectedEvent connectedEvent -> {
+                    validate(connectedEvent);
+
+                    log.debug(
+                            "Received CLIENT_CONNECTED: key={} partition={} offset={} sid={}",
+                            record.key(),
+                            record.partition(),
+                            record.offset(),
+                            connectedEvent.getJwt().getSid()
+                    );
+
+                    sessionService.handleConnectionEvent(connectedEvent);
+                }
+
+                case ClientDisconnectedEvent disconnectedEvent -> {
+                    validate(disconnectedEvent);
+
+                    log.debug(
+                            "Received CLIENT_DISCONNECTED: key={} partition={} offset={} sid={}",
+                            record.key(),
+                            record.partition(),
+                            record.offset(),
+                            disconnectedEvent.getJwt().getSid()
+                    );
+
+                    sessionService.handleDisconnectionEvent(disconnectedEvent);
+                }
+
+                default -> {
+                    log.warn(
+                            "Unsupported connection event type: key={} partition={} offset={} class={}",
+                            record.key(),
+                            record.partition(),
+                            record.offset(),
+                            event != null ? event.getClass().getName() : "null"
+                    );
+
+                    throw new IllegalArgumentException(
+                            "Unsupported connection event: "
+                                    + (event != null
+                                    ? event.getClass().getName()
+                                    : "null")
+                    );
+                }
+            }
 
             ack.acknowledge();
+
         } catch (ConstraintViolationException validationEx) {
-            // Not retryable — will be routed straight to the DLT by the error handler.
-            log.warn("Invalid connection event, sending to DLT: partition={} offset={} reason={}",
-                    record.partition(), record.offset(), validationEx.getMessage());
+
+            // Not retryable — routed to DLT by the configured error handler.
+            log.warn(
+                    "Invalid connection event, sending to DLT: partition={} offset={} reason={}",
+                    record.partition(),
+                    record.offset(),
+                    validationEx.getMessage()
+            );
+
             throw validationEx;
+
         } catch (Exception ex) {
-            // Transient failure (e.g. Redis temporarily unavailable) — rethrow so the
-            // configured DefaultErrorHandler can retry with backoff before DLT routing.
-            log.error("Failed to process connection event, will retry: partition={} offset={}",
-                    record.partition(), record.offset(), ex);
+
+            // Transient failure — rethrow so DefaultErrorHandler
+            // can retry with the configured backoff.
+            log.error(
+                    "Failed to process connection event, will retry: partition={} offset={}",
+                    record.partition(),
+                    record.offset(),
+                    ex
+            );
+
             throw ex;
         }
     }
 
-    private void validate(ClientConnectedEvent event) {
-        Set<ConstraintViolation<ClientConnectedEvent>> violations = validator.validate(event);
+    private <T> void validate(T event) {
+
+        Set<ConstraintViolation<T>> violations =
+                validator.validate(event);
+
         if (!violations.isEmpty()) {
+
             String message = violations.stream()
                     .map(ConstraintViolation::getMessage)
                     .collect(Collectors.joining(", "));
-            throw new ConstraintViolationException(message, violations);
+
+            throw new ConstraintViolationException(
+                    message,
+                    violations
+            );
         }
     }
 }

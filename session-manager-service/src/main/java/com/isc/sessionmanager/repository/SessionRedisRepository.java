@@ -1,6 +1,6 @@
 package com.isc.sessionmanager.repository;
 
-import com.isc.sessionmanager.model.ClientSession;
+import com.isc.common.dto.ClientSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +49,7 @@ public class SessionRedisRepository {
     public void save(String phoneNumber, ClientSession session) {
         redisTemplate.opsForValue().set(keyFor(phoneNumber), session, Duration.ofSeconds(ttlSeconds));
         log.debug("Session saved for phoneNumber={} status={} node={}",
-                phoneNumber, session.status(), session.node());
+                phoneNumber, session.getStatus(), session.getServerNodeId());
     }
 
     public void delete(String phoneNumber) {

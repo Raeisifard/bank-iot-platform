@@ -3,6 +3,71 @@
   <component name="UltimateRestHistory">
     <items>
       <historyItem>
+        <option name="timestamp" value="1785650476966" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;username&quot; : &quot;behnam&quot;,
+  &quot;password&quot; : &quot;benroy&quot;,
+  &quot;customerId&quot; : &quot;cust-1002&quot;,
+  &quot;otp&quot; : &quot;1234&quot;,
+  &quot;deviceId&quot; : &quot;d425&quot;,
+  &quot;clientId&quot; : &quot;c426&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1785577015920" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;username&quot; : &quot;behnam&quot;,
+  &quot;password&quot; : &quot;benroy&quot;,
+  &quot;customerId&quot; : &quot;cust-1002&quot;,
+  &quot;otp&quot; : &quot;1234&quot;,
+  &quot;deviceId&quot; : &quot;d425&quot;,
+  &quot;clientId&quot; : &quot;c426&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1785576873516" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;username&quot; : &quot;behnam&quot;,
+  &quot;password&quot; : &quot;benroy&quot;,
+  &quot;customerId&quot; : &quot;cust-1002&quot;,
+  &quot;otp&quot; : &quot;1234&quot;,
+  &quot;deviceId&quot; : &quot;d425&quot;,
+  &quot;clientId&quot; : &quot;c426&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1785572987223" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;username&quot; : &quot;behnam&quot;,
+  &quot;password&quot; : &quot;benroy&quot;,
+  &quot;customerId&quot; : &quot;cust-1002&quot;,
+  &quot;otp&quot; : &quot;1234&quot;,
+  &quot;deviceId&quot; : &quot;d425&quot;,
+  &quot;clientId&quot; : &quot;c426&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1785572960676" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;username&quot; : &quot;behnam&quot;,
+  &quot;password&quot; : &quot;benroy&quot;,
+  &quot;customerId&quot; : &quot;cust-1001&quot;,
+  &quot;otp&quot; : &quot;1234&quot;,
+  &quot;deviceId&quot; : &quot;d425&quot;,
+  &quot;clientId&quot; : &quot;c426&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
         <option name="timestamp" value="1785408598301" />
         <request method="POST" url="http://localhost:8083/api/v1/auth/token">
           <bodyContent>{
@@ -251,39 +316,6 @@
       <historyItem>
         <option name="timestamp" value="1784885666213" />
         <request url="http://localhost:8080/.well-known/test" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885434961" />
-        <request url="http://localhost:8083/.well-known/jwks.json" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885420077" />
-        <request url="http://localhost:8083/.well-known/jwks.json" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885334135" />
-        <request url="http://localhost:8083/.well-known/jwks.json" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885318409" />
-        <request method="POST" url="http://localhost:8080/api/v1/auth/refresh">
-          <bodyContent>{
-  &quot;refreshToken&quot; : &quot;&quot;
-}</bodyContent>
-        </request>
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885315297" />
-        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
-          <bodyContent>{
-  &quot;username&quot; : &quot;&quot;,
-  &quot;password&quot; : &quot;&quot;,
-  &quot;customerId&quot; : &quot;&quot;,
-  &quot;otp&quot; : &quot;&quot;,
-  &quot;deviceId&quot; : &quot;&quot;,
-  &quot;clientId&quot; : &quot;&quot;
-}</bodyContent>
-        </request>
       </historyItem>
     </items>
   </component>

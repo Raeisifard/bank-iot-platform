@@ -1,5 +1,6 @@
 package com.isc.transaction.controller;
 
+import com.isc.common.dto.ClientAttributes;
 import com.isc.security.model.JwtClaims;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -10,11 +11,10 @@ public class TransController {
     public ResponseEntity<?> getTransactions(
             Authentication authentication) {
 
-        JwtClaims claims =
-                (JwtClaims) authentication.getPrincipal();
+        ClientAttributes claims =
+                (ClientAttributes) authentication.getPrincipal();
 
-        String clientId =
-                claims.getClientId();
+        String clientId = claims.getCid();
 
         return ResponseEntity.ok(clientId);
     }

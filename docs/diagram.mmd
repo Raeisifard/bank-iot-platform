@@ -1,0 +1,49 @@
+flowchart TB
+    subgraph Client Layer
+        Flutter[Flutter Mobile Client]
+    end
+
+    subgraph Gateway
+        EMQX[EMQX MQTT Broker]
+    end
+
+    Ingress[mqtt-ingress-service]
+
+    subgraph Messaging
+        Kafka[(Kafka)]
+    end
+
+    subgraph Core Services
+        SessionMgr[session-manager-service]
+        TokenSvc[token-service]
+        AckSvc[acknowledge-service - Apache Camel]
+        TxnSvc[transaction-service]
+        NotifSvc[notification-service - skeleton]
+    end
+
+    subgraph Admin
+        AdminPanel[admin-panel]
+    end
+
+    subgraph Infra
+        Redis[(Redis)]
+        Vault[HashiCorp Vault - Transit Engine]
+    end
+
+    Flutter -- MQTT plus JWT auth --> EMQX
+    EMQX --> Ingress
+    Ingress -- publish events --> Kafka
+
+    Kafka -- ConnectionEvent --> SessionMgr
+    Kafka -- ack events --> AckSvc
+    Kafka -- txn events --> TxnSvc
+    Kafka -- notif events --> NotifSvc
+
+    SessionMgr -- write session key --> Redis
+    TokenSvc -. read validate .-> Redis
+    TokenSvc -- sign verify --> Vault
+    TokenSvc -- issues JWT JWKS --> EMQX
+
+    AckSvc -- REST --> TxnSvc
+    AdminPanel -- REST query --> SessionMgr
+    AdminPanel -- REST query --> TokenSvc

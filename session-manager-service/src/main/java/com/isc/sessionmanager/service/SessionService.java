@@ -1,6 +1,7 @@
 package com.isc.sessionmanager.service;
 
 import com.isc.contract.event.session.ClientConnectedEvent;
+import com.isc.contract.event.session.ClientDisconnectedEvent;
 
 public interface SessionService {
 
@@ -12,4 +13,5 @@ public interface SessionService {
      * (e.g. a DISCONNECTED for an old sub-session arriving after a newer CONNECTED).
      */
     void handleConnectionEvent(ClientConnectedEvent event);
+    void handleDisconnectionEvent(ClientDisconnectedEvent event);
 }

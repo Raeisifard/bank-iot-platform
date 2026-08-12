@@ -68,6 +68,12 @@ app:
       online-users-key: online-users
       default-ttl-hours: 24
 
+grpc:
+  server:
+    port: 9090
+    security:
+      enabled: false   # فعلاً plaintext؛ برای پروداکشن TLS را روشن کنید
+
 management:
   endpoints:
     web:

@@ -4,7 +4,7 @@ import com.isc.common.enums.SessionStatus;
 import com.isc.tokenservice.config.JwtProperties;
 import com.isc.common.dto.SessionInfo;
 import com.isc.common.enums.SessionReason;
-import com.isc.tokenservice.exception.SessionNotFoundException;
+import com.isc.common.exception.SessionNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;

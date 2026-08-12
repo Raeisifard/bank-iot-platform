@@ -15,7 +15,7 @@
     </parent>
     <modules>
         <module>common</module>
-        <module>common-contract</module>
+        <module>common-contract-kafka</module>
         <module>common-security</module>
         <module>common-web</module>
 
@@ -27,6 +27,7 @@
         <module>mqtt-ingress-service</module>
         <module>session-manager-service</module>
         <module>admin-panel</module>
+        <module>common-contract-grpc</module>
 
     </modules>
     <properties>

@@ -9,14 +9,15 @@ spring:
     redis:
       host: ${REDIS_HOST:172.16.88.115}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:StrongRedisPassword}
-      database: ${REDIS_DATABASE:0}
-      timeout: 2000ms
+      password: ${REDIS_PASSWORD}
+      timeout: 3000ms
+
       lettuce:
         pool:
-          max-active: 16
-          max-idle: 8
-          min-idle: 2
+          enabled: true
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:172.16.88.115:9092}
@@ -28,9 +29,9 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.trusted.packages: "com.isc.sessionmanager.model"
+        spring.json.trusted.packages: "com.isc.contract.event.session"
         spring.json.use.type.headers: false
-        spring.json.value.default.type: com.isc.sessionmanager.model.ConnectionEvent
+        spring.json.value.default.type: com.isc.contract.event.session.ClientConnectedEvent
         max.poll.records: 500
         max.poll.interval.ms: 300000
     producer:

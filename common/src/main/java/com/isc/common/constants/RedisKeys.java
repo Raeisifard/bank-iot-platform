@@ -12,5 +12,13 @@ public final class RedisKeys {
     public static final String REFRESH_TOKEN = "refresh:";
     public static final String SESSION_REFRESH = "session:refresh:";
 
+    // =====================================================
+    // MESSAGE DELIVERY
+    // =====================================================
+
+    public static final String MESSAGE_DELIVERY = "delivery:";
+
+    public static final String MESSAGE_RETRY = "delivery:retry";
+
     public static final String MESSAGE_PENDING = "pending:";
 }

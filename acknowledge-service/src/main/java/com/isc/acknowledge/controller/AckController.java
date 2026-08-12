@@ -1,16 +1,15 @@
 package com.isc.acknowledge.controller;
 
 import com.isc.acknowledge.dto.AckRequest;
-import com.isc.acknowledge.service.RedisPendingService;
 import com.isc.common.constants.KafkaTopics;
 import com.isc.common.dto.ClientAttributes;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,55 +20,61 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Acknowledge")
 public class AckController {
 
-    private final RedisPendingService pendingService;
     private final KafkaTemplate<String, AckRequest> kafkaTemplate;
 
-    @DeleteMapping("/{messageId}")
-    @Operation(summary = "Delete Transaction")
-    public ResponseEntity<String> deleteAck(
-            @PathVariable String messageId,
-            @AuthenticationPrincipal ClientAttributes ca) {
-
-        log.info(
-                "ACK received. messageId={}, clientId={}",
-                messageId,
-                ca.getCid());
-
-        pendingService.removePending(messageId);
-
-        return ResponseEntity.ok(
-                "ACK received: " + messageId);
-    }
-
     @PostMapping
-    @Operation(summary = "Send ACK to Kafka")
-    public void publishAck(
-            @RequestBody AckRequest request,
-            @AuthenticationPrincipal ClientAttributes ca) {
-        if (ca.getCid().equals(request.getClientId())) {
+    @Operation(
+            summary = "Acknowledge a delivered message"
+    )
+    public ResponseEntity<Void> acknowledge(
+            @Valid @RequestBody AckRequest request,
+            @AuthenticationPrincipal ClientAttributes client) {
 
-            log.info(
-                    "Publish ACK. clientId={}",
-                    ca.getCid());
+        validateClientOwnership(request, client);
 
-            kafkaTemplate.send(
-                    KafkaTopics.ACK_EVENT,
-                    request);
-        } else {
-            log.warn(
-                    "Publish ACK. clientId={} in claims is not equal with request clientId={}",
-                    ca.getCid(), request.getClientId());
-        }
+        log.debug(
+                "ACK accepted for publication. messageId={}, clientId={}",
+                request.getMessageId(),
+                client.getCid()
+        );
+
+        kafkaTemplate.send(
+                KafkaTopics.ACK_EVENT,
+                request.getMessageId(),
+                request
+        );
+
+        return ResponseEntity.accepted().build();
     }
 
-    @GetMapping("/ack")
-    public ResponseEntity<String> ack(
-            Authentication authentication) {
+    private void validateClientOwnership(
+            AckRequest request,
+            ClientAttributes client) {
 
-        ClientAttributes ca = (ClientAttributes) authentication.getPrincipal();
+        if (client == null) {
+            throw new IllegalStateException("Authenticated client is missing");
+        }
 
-        String clientId = ca.getCid();
+        if (request.getClientId() == null ||
+                !client.getCid().equals(request.getClientId())) {
 
-        return ResponseEntity.ok(clientId);
+            throw new IllegalArgumentException(
+                    "ACK clientId does not match authenticated client"
+            );
+        }
+
+        if (request.getMessageId() == null ||
+                request.getMessageId().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "messageId is required"
+            );
+        }
+
+        if (request.getStatus() == null) {
+            throw new IllegalArgumentException(
+                    "status is required"
+            );
+        }
     }
 }

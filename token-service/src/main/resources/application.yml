@@ -12,19 +12,20 @@ spring:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
 
-  data:
-    redis:
-      host: 172.16.88.115
-      port: 6379
-      password: StrongRedisPassword
-      timeout: 3000
+  spring:
+    data:
+      redis:
+        host: ${REDIS_HOST:172.16.88.115}
+        port: ${REDIS_PORT:6379}
+        password: ${REDIS_PASSWORD}
+        timeout: 3000ms
 
-      lettuce:
-        pool:
-          enabled: true
-          max-active: 32
-          max-idle: 16
-          min-idle: 4
+        lettuce:
+          pool:
+            enabled: true
+            max-active: 32
+            max-idle: 16
+            min-idle: 4
 
   boot:
     admin:

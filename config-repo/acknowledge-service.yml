@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: acknowledge-service
+
+bank-iot-platform:
+
+  redis:
+    enabled: true
+
+  kafka:
+    enabled: true
+
+    consumer:
+      group-id: acknowledge-service

@@ -1,6 +1,5 @@
 package com.isc.sessionmanager.config;
 
-import com.isc.contract.event.session.ClientConnectedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -24,6 +23,15 @@ import java.util.Map;
  *  - a JSON-aware consumer factory (tolerant of malformed messages via ErrorHandlingDeserializer)
  *  - a DefaultErrorHandler that retries transient failures a bounded number of times,
  *    then routes the poison message to a dead-letter topic instead of blocking the partition.
+ *
+ * IMPORTANT: the ingress producer (EmqxWebhookController) publishes BOTH
+ * ClientConnectedEvent and ClientDisconnectedEvent to the same topic
+ * (KafkaTopics.MQTT_CONNECTION), using Spring's default JsonSerializer, which
+ * stamps a __TypeId__ header per record with the event's fully-qualified
+ * class name. This consumer MUST honor that header (USE_TYPE_INFO_HEADERS=true)
+ * rather than forcing every record to a single default type — otherwise
+ * disconnect events silently get decoded as connect events and the
+ * ClientDisconnectedEvent branch in ConnectionEventListener never fires.
  */
 @Configuration
 public class KafkaConsumerConfig {
@@ -41,15 +49,19 @@ public class KafkaConsumerConfig {
     private long backoffMs;
 
     @Bean
-    public ConsumerFactory<String, ClientConnectedEvent> connectionEventConsumerFactory() {
+    public ConsumerFactory<String, Object> connectionEventConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         props.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
+        // Real event package (was "com.isc.sessionmanager.model", which doesn't exist —
+        // every message was being rejected as untrusted and sent straight to the DLT).
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.isc.contract.event.session");
-        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, ClientConnectedEvent.class.getName());
+        // Honor the __TypeId__ header the producer already sends per-record instead of
+        // forcing a single default type; lets ClientConnectedEvent and
+        // ClientDisconnectedEvent both deserialize correctly off the same topic.
         props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, true);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -93,12 +105,12 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory<String, ClientConnectedEvent>
+    public org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory<String, Object>
     connectionEventKafkaListenerContainerFactory(
-            ConsumerFactory<String, ClientConnectedEvent> connectionEventConsumerFactory,
+            ConsumerFactory<String, Object> connectionEventConsumerFactory,
             DefaultErrorHandler kafkaErrorHandler) {
 
-        var factory = new org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory<String, ClientConnectedEvent>();
+        var factory = new org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory<String, Object>();
         factory.setConsumerFactory(connectionEventConsumerFactory);
         factory.setCommonErrorHandler(kafkaErrorHandler);
         factory.setConcurrency(3);

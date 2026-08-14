@@ -1,17 +1,28 @@
-server:
-  port: 8084
-
 spring:
-  application:
-    name: acknowledge-service
-
-  config:
-    import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
 
   jackson:
     serialization:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
+
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+logging:
+  level:
+    root: INFO
+
+bank-iot-platform:
+  application:
+    environment: local
+
+  redis:
+    enabled: true
+    host: localhost
+    port: 6379
+    database: 0
+    password: ""
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:172.16.88.115:9092}
@@ -32,7 +43,18 @@ spring:
       enable-idempotence: true
       retries: 10
 
-app:
-  kafka:
-    topics:
-      ack: ack.event
+  oracle:
+    enabled: false
+    jdbc-url: jdbc:oracle:thin:@localhost:1521/FREEPDB1
+    username: bank-iot-platform
+    password: change-me
+    maximum-pool-size: 10
+
+  mongodb:
+    enabled: false
+    uri: mongodb://localhost:27017
+    database: bank-iot-platform
+
+  vault:
+    enabled: false
+    uri: http://localhost:8200

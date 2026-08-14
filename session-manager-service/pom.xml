@@ -25,7 +25,6 @@
         <os-plugin.version>1.7.0</os-plugin.version>
         <grpc-spring.version>3.1.0.RELEASE</grpc-spring.version>
         <!--<spring-boot.version>3.2.4</spring-boot.version>-->
-        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <dependencies>
@@ -110,11 +109,13 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- Web (for actuator health/metrics exposure; optional but recommended) -->
-        <!--<dependency>
+        <!-- Web: required for the internal REST query API (SessionQueryController).
+             Without this, @RestController has no Spring MVC dispatcher to run on
+             and /internal/sessions/** never actually comes up. -->
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>-->
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

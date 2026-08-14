@@ -6,7 +6,7 @@ import com.isc.common.enums.SessionReason;
 import com.isc.common.enums.SessionStatus;
 import com.isc.common.exception.SessionNotFoundException;
 import com.isc.grpc.session.*;
-import com.isc.sessionmanager.service.SessionServiceImpl;
+import com.isc.sessionmanager.service.SessionService;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -15,15 +15,15 @@ import net.devh.boot.grpc.server.service.GrpcService;
 import java.time.Instant;
 
 /**
- * Wire-level adapter for SessionServiceImpl. Contains no session logic
+ * Wire-level adapter for SessionService. Contains no session logic
  * itself — only proto <-> domain conversion and exception mapping to
- * gRPC statuses. All actual reads/writes still go through SessionServiceImpl.
+ * gRPC statuses. All actual reads/writes still go through SessionService.
  */
 @GrpcService
 @RequiredArgsConstructor
 public class GrpcSessionService extends SessionGrpcServiceGrpc.SessionGrpcServiceImplBase {
 
-    private final SessionServiceImpl sessionService;
+    private final SessionService sessionService;
 
     @Override
     public void createSession(CreateSessionRequest request, StreamObserver<SessionIdReply> responseObserver) {

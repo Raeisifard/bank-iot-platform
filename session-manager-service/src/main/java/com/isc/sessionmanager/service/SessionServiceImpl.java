@@ -42,6 +42,7 @@ public class SessionServiceImpl implements SessionService {
     // Authentication-time lifecycle (formerly tokenservice.identity.SessionService)
     // ---------------------------------------------------------------
 
+    @Override
     public String create(SessionInfo session) {
         String key = buildSessionKey(session.getSessionId());
 
@@ -72,6 +73,7 @@ public class SessionServiceImpl implements SessionService {
         return session.getSessionId();
     }
 
+    @Override
     public SessionInfo getSession(String sessionId) {
         Map<Object, Object> map = redis.opsForHash().entries(buildSessionKey(sessionId));
         if (map.isEmpty()) {
@@ -80,6 +82,7 @@ public class SessionServiceImpl implements SessionService {
         return toSessionInfo(map);
     }
 
+    @Override
     public boolean isValid(String sessionId) {
         SessionInfo session = getSession(sessionId);
         if (session == null || session.getStatus() != SessionStatus.ONLINE) {
@@ -92,6 +95,7 @@ public class SessionServiceImpl implements SessionService {
                 || !session.getLastRefreshAt().plus(sessionProperties.getSessionIdleTtl()).isBefore(Instant.now());
     }
 
+    @Override
     public void revokeSession(String sessionId, SessionReason reason) {
         String key = buildSessionKey(sessionId);
         SessionInfo session = requireSession(sessionId, key);
@@ -104,6 +108,7 @@ public class SessionServiceImpl implements SessionService {
         redis.delete(buildClientSessionKey(session.getClientId()));
     }
 
+    @Override
     public void deleteSession(String sessionId) {
         String key = buildSessionKey(sessionId);
         SessionInfo session = requireSession(sessionId, key);
@@ -112,6 +117,7 @@ public class SessionServiceImpl implements SessionService {
         redis.delete(buildClientSessionKey(session.getClientId()));
     }
 
+    @Override
     public void refreshSession(String sessionId) {
         String key = buildSessionKey(sessionId);
         requireSession(sessionId, key);
@@ -119,6 +125,7 @@ public class SessionServiceImpl implements SessionService {
         redis.expire(key, sessionProperties.getSessionIdleTtl());
     }
 
+    @Override
     public void touchSession(String sessionId) {
         String key = buildSessionKey(sessionId);
         if (!redis.hasKey(key)) {
@@ -127,15 +134,18 @@ public class SessionServiceImpl implements SessionService {
         redis.opsForHash().put(key, LAST_REFRESH_AT, Instant.now().toString());
     }
 
+    @Override
     public String getDeviceSession(String customerId, String deviceId) {
         return redis.opsForValue().get(buildDeviceSessionKey(customerId, deviceId));
     }
 
+    @Override
     public boolean hasActiveDeviceSession(String customerId, String deviceId) {
         String sessionId = getDeviceSession(customerId, deviceId);
         return sessionId != null && isValid(sessionId);
     }
 
+    @Override
     public String getClientSession(String clientId) {
         return redis.opsForValue().get(buildClientSessionKey(clientId));
     }
@@ -148,6 +158,7 @@ public class SessionServiceImpl implements SessionService {
      * Applies a CLIENT_CONNECTED / CLIENT_DISCONNECTED / CLIENT_KEEPALIVE
      * event to the session identified by jwt.sid.
      */
+    @Override
     public void handleConnectionEvent(ClientConnectedEvent event) {
         ClientAttributes jwt = event.getJwt();
         String sid = jwt.getSid();
@@ -161,9 +172,11 @@ public class SessionServiceImpl implements SessionService {
             return;
         }
 
+        // CLIENT_DISCONNECTED never reaches this method: ConnectionEventListener
+        // dispatches by Java type (ClientConnectedEvent vs ClientDisconnectedEvent),
+        // and disconnects are routed to handleDisconnectionEvent() instead.
         SessionStatus status = switch (event.getEventType()) {
             case CLIENT_CONNECTED, CLIENT_KEEPALIVE -> SessionStatus.ONLINE;
-            //case CLIENT_DISCONNECTED -> SessionStatus.OFFLINE;
             default -> null;
         };
 
@@ -287,7 +300,11 @@ public class SessionServiceImpl implements SessionService {
         }
 
         redis.opsForHash().putAll(key, fields);
-        //redis.expire(key, sessionProperties.getSessionIdleTtl());
+        // Safety-net TTL: re-applied on every CONNECTED/KEEPALIVE so a lost
+        // DISCONNECTED event can't leave a client reporting online forever.
+        // This was previously commented out, silently defeating the TTL
+        // documented in the README/SessionProperties javadoc.
+        redis.expire(key, sessionProperties.getSessionIdleTtl());
 
         log.info("Session connectivity updated: sid={} status={} node={}", sid, status, event.getNodeId());
     }

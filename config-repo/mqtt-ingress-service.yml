@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: ingress-service
+
+  kafka:
+    consumer:
+      group-id: banking-processor-group
+
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+      properties:
+        spring.json.trusted.packages: "*"
+
+    producer:
+      compression-type: snappy
+
+      retries: 5
+
+    listener:
+      ack-mode: manual_immediate
+      concurrency: 6

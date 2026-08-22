@@ -1,5 +1,0 @@
-com.isc.infrastructure.redis.RedisInfrastructureAutoConfiguration
-com.isc.infrastructure.kafka.KafkaInfrastructureAutoConfiguration
-com.isc.infrastructure.mongo.MongoInfrastructureAutoConfiguration
-com.isc.infrastructure.oracle.OracleInfrastructureAutoConfiguration
-com.isc.infrastructure.vault.VaultInfrastructureAutoConfiguration

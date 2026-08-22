@@ -1,0 +1,22 @@
+# Real Vault integration-test configuration.
+# Values can be overridden through environment variables.
+
+vault:
+  enabled: true
+  uri: ${VAULT_TEST_URI:http://localhost:8200}
+  token: ${VAULT_TEST_TOKEN:}
+
+  kv:
+    enabled: true
+    mount: ${VAULT_TEST_KV_MOUNT:key-management}
+
+  transit:
+    enabled: true
+    mount: ${VAULT_TEST_TRANSIT_MOUNT:transit}
+
+jwt:
+  key-policy:
+    path: ${VAULT_TEST_JWT_POLICY_PATH:bank-jwt}
+
+  transit-key:
+    name: ${VAULT_TEST_TRANSIT_KEY_NAME:bank-jwt}

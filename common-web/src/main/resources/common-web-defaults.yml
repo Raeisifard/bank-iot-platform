@@ -1,0 +1,13 @@
+common:
+  web:
+    enabled: true
+    security-enabled: true
+    authentication-enabled: true
+    protected-paths:
+      - /api/**
+    public-paths:
+      - /actuator/health
+      - /actuator/info
+      - /v3/api-docs/**
+      - /swagger-ui/**
+      - /swagger-ui.html

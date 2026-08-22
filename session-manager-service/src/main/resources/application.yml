@@ -18,6 +18,32 @@ spring:
           max-idle: 8
           min-idle: 2
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:172.16.88.115:9092}
+    consumer:
+      group-id: session-manager-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        # NOTE: KafkaConsumerConfig defines the actual ConsumerFactory/ContainerFactory
+        # beans used by ConnectionEventListener, so this block isn't authoritative for
+        # that listener — kept here only so it doesn't contradict the real config if a
+        # future @KafkaListener ever relies on the auto-configured factory instead.
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "com.isc.contract.event.session"
+        spring.json.use.type.headers: true
+        max.poll.records: 500
+        max.poll.interval.ms: 300000
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    listener:
+      ack-mode: manual_immediate
+      concurrency: 3
+      missing-topics-fatal: false
+
   boot:
     admin:
       client:

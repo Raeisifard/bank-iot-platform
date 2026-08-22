@@ -1,0 +1,15 @@
+# Defaults only.
+# Production values must be supplied by Config Server/environment.
+common:
+  vault:
+    enabled: true
+    uri: http://172.16.88.115:8200
+    token: "root"
+
+    kv:
+      enabled: true
+      mount: key-management
+
+    transit:
+      enabled: true
+      mount: transit

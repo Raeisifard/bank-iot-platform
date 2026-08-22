@@ -1,94 +1,52 @@
 server:
-  port: 8083
+  port: ${SERVER_PORT:8083}
 
-spring:
-  application:
-    name: token-service
-  profiles:
-    active: dev
+token:
+  service:
+    enabled: true
+    issuer: ${TOKEN_ISSUER:isc-token-service}
+    audience: ${TOKEN_AUDIENCE:isc-services}
+    clock-skew: 30s
+    access-token-lifetime: 15m
+    refresh-token-lifetime: 30d
 
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
-    default-property-inclusion: non_null
-
-  spring:
-    data:
-      redis:
-        host: ${REDIS_HOST:172.16.88.115}
-        port: ${REDIS_PORT:6379}
-        password: ${REDIS_PASSWORD}
-        timeout: 3000ms
-
-        lettuce:
-          pool:
-            enabled: true
-            max-active: 32
-            max-idle: 16
-            min-idle: 4
-
-  boot:
-    admin:
-      client:
-        url: http://localhost:9000
-        auto-registration: true
-        instance:
-          prefer-ip: true
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-
-  endpoint:
-    health:
-      show-details: always
-
-  health:
-    redis:
-      enabled: true
-    diskspace:
-      enabled: true
-
-  info:
-    env:
-      enabled: true
-
-vault:
-  uri: http://172.16.88.115:8200
-  token: root
-security:
-  jwt-secret: my-super-secret-key-my-super-secret-key
-  vault:
-    transit:
-      key-name: bank-jwt-v2
   jwt:
-    issuer: bank-auth
-    audience: ANDROID
+    algorithm: RS256
+    key-id-prefix: jwt
+    access-token-lifetime: 15m
+    refresh-token-lifetime: 30d
 
-    access-token-ttl: P1D # 5min<---->15min
-    refresh-token-ttl: P30D
-    refresh-token-audit-ttl: P10D
+    key-policy:
+      key-name: ${TOKEN_JWT_KEY_NAME:bank-jwt-v2}
+      algorithm: RS256
+      rotation-interval: 30d
+      publication-overlap: 7d
+      max-published-versions: 3
 
-    session-idle-ttl: P30D
-    session-absolute-ttl: P90D
-    session-audit-ttl: P10D
+      # KV v2 secret path, WITHOUT /v1/ and WITHOUT /data/
+      policy-path: ${TOKEN_JWT_POLICY_PATH:key-management/bank-jwt}
 
-    kv-mount: kv
-    kv-path: "key-management/bank-jwt" #kv/data/jwt
-    rotation:
-      strategy: SCHEDULED #MANUAL, SCHEDULED, EVENT_DRIVEN
-      key-interval: P30D
-      overlap-period: P1D
-      retain-versions: 3
-      check-interval: 5
+      # KV mount
+      policy-mount: ${TOKEN_JWT_POLICY_MOUNT:kv}
 
-springdoc:
-  swagger-ui:
-    urls:
-      - name: banking-api
-        url: /openapi/banking-api.yml
+common:
+  vault:
+    enabled: ${COMMON_VAULT_ENABLED:true}
+    uri: ${VAULT_URI:http://172.16.88.115:8200}
+    token: ${VAULT_TOKEN:root}
 
-      - name: spring-generated
-        url: /v3/api-docs
+    kv:
+      enabled: true
+      mount: ${VAULT_KV_MOUNT:kv}
+
+    transit:
+      enabled: true
+      mount: ${VAULT_TRANSIT_MOUNT:transit}
+
+  security:
+    enabled: false
+
+  web:
+    enabled: true
+    security-enabled: false
+    authentication-enabled: false

@@ -1,0 +1,5 @@
+token:
+  service:
+    enabled: true
+    issuer: test-issuer
+    audience: test-audience

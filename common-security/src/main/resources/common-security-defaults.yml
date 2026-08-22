@@ -1,0 +1,18 @@
+common:
+  security:
+    enabled: true
+    jwt:
+      enabled: true
+      algorithm: RS256
+      clock-skew: 30s
+      issuer:
+      audiences: []
+      vault-key-name: bank-jwt-v2
+      policy-path: jwt/key-policy
+      # Leave blank to use vault.kv.mount from common-vault.
+      policy-mount:
+    cache:
+      public-keys:
+        enabled: true
+        ttl: 15m
+        maximum-size: 100

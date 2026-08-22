@@ -1,12 +1,9 @@
 server:
-  port: 8084
+  port: 8081
 
 spring:
   application:
     name: acknowledge-service
-
-  config:
-    import: configserver:${CONFIG_SERVER_URL:http://localhost:8888}
 
   jackson:
     serialization:
@@ -36,3 +33,14 @@ app:
   kafka:
     topics:
       ack: ack.event
+
+vault:
+  uri: http://172.16.88.115:8200
+  token: root
+security:
+  authentication:
+    enabled: true
+  jwt-secret: my-super-secret-key-my-super-secret-key
+  vault:
+    transit:
+      key-name: bank-jwt-v2

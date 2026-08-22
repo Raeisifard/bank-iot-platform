@@ -1,3 +1,0 @@
-vault:
-  jwt:
-    path: jwt/keys

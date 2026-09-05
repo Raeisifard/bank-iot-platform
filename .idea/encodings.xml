@@ -11,7 +11,9 @@
     <file url="file://$PROJECT_DIR$/common-contract-kafka/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common-contract/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common-infrastructure/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common-redis/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common-security/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common-vault/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common-web/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common/src/main/resources" charset="UTF-8" />

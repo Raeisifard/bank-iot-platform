@@ -1,0 +1,60 @@
+server:
+  port: ${SERVER_PORT:8085}
+
+spring:
+  application:
+    name: ${DELIVERY_SERVICE_NAME:delivery-service}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      enable-idempotence: true
+      retries: 10
+
+common:
+  redis:
+    enabled: ${COMMON_REDIS_ENABLED:false}
+    url: ${COMMON_REDIS_URL:${REDIS_URL:redis://localhost:6379}}
+    password: ${REDIS_PASSWORD:}
+    database: ${REDIS_DATABASE:0}
+    timeout: ${REDIS_TIMEOUT:2s}
+
+delivery:
+  enabled: ${DELIVERY_ENABLED:false}
+  kafka:
+    inbound-topic: ${DELIVERY_INBOUND_TOPIC:delivery.inbound}
+    outbound-topic: ${DELIVERY_OUTBOUND_TOPIC:mqtt.message.send}
+    acknowledgement-topic: ${DELIVERY_ACK_TOPIC:ack.event}
+    consumer-group: ${DELIVERY_CONSUMER_GROUP:delivery-service}
+  oracle:
+    enabled: ${DELIVERY_ORACLE_ENABLED:false}
+    url: ${ORACLE_JDBC_URL:}
+    username: ${ORACLE_USERNAME:}
+    password: ${ORACLE_PASSWORD:}
+    table-name: ${DELIVERY_ORACLE_TABLE:IOT_DELIVERY_MESSAGE}
+  retry:
+    publish-timeout: ${DELIVERY_PUBLISH_TIMEOUT:10s}
+    scheduler-interval-ms: ${DELIVERY_RETRY_SCHEDULER_INTERVAL_MS:1000}
+    delays: ${DELIVERY_RETRY_DELAYS:2s,5s}
+  audit:
+    pending-ttl: ${DELIVERY_PENDING_TTL:7d}
+    delivered-ttl: ${DELIVERY_DELIVERED_TTL:30d}
+    failed-ttl: ${DELIVERY_FAILED_TTL:90d}
+    archived-ttl: ${DELIVERY_ARCHIVED_TTL:180d}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

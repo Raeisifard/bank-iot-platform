@@ -6,6 +6,7 @@ import com.isc.acknowledge.service.AckRedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -13,6 +14,7 @@ import java.time.Instant;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(prefix = "common.redis", name = "enabled", havingValue = "true")
 public class AckConsumer {
 
     private final ObjectMapper objectMapper;

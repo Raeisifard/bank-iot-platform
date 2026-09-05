@@ -1,10 +1,12 @@
 package com.isc.sessionmanager.repository;
 
 import com.isc.common.dto.ClientSession;
+import com.isc.common.redis.RedisOperations;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
@@ -25,7 +27,8 @@ import java.util.Optional;
 @Slf4j
 public class SessionRedisRepository {
 
-    private final RedisTemplate<String, ClientSession> redisTemplate;
+    private final RedisOperations redis;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.session.key-prefix:session:}")
     private String keyPrefix;
@@ -38,8 +41,7 @@ public class SessionRedisRepository {
     }
 
     public Optional<ClientSession> find(String phoneNumber) {
-        ClientSession session = redisTemplate.opsForValue().get(keyFor(phoneNumber));
-        return Optional.ofNullable(session);
+        return redis.get(keyFor(phoneNumber)).map(this::deserialize);
     }
 
     /**
@@ -47,13 +49,29 @@ public class SessionRedisRepository {
      * and OFFLINE-with-retention writes.
      */
     public void save(String phoneNumber, ClientSession session) {
-        redisTemplate.opsForValue().set(keyFor(phoneNumber), session, Duration.ofSeconds(ttlSeconds));
+        redis.set(keyFor(phoneNumber), serialize(session), Duration.ofSeconds(ttlSeconds));
         log.debug("Session saved for phoneNumber={} status={} node={}",
                 phoneNumber, session.getStatus(), session.getServerNodeId());
     }
 
     public void delete(String phoneNumber) {
-        Boolean deleted = redisTemplate.delete(keyFor(phoneNumber));
+        boolean deleted = redis.delete(keyFor(phoneNumber));
         log.debug("Session delete for phoneNumber={} result={}", phoneNumber, deleted);
+    }
+
+    private String serialize(ClientSession session) {
+        try {
+            return objectMapper.writeValueAsString(session);
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("Could not serialize client session", exception);
+        }
+    }
+
+    private ClientSession deserialize(String value) {
+        try {
+            return objectMapper.readValue(value, ClientSession.class);
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("Could not deserialize client session", exception);
+        }
     }
 }

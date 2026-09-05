@@ -1,10 +1,10 @@
 package com.isc.acknowledge.service;
 
 import com.isc.common.constants.RedisKeys;
+import com.isc.common.redis.RedisOperations;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -13,11 +13,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "common.redis", name = "enabled", havingValue = "true")
 public class AckRedisService {
 
-    private final RedisTemplate<String, String> redisTemplate;
+        private final RedisOperations redis;
 
-    private static final DefaultRedisScript<Long> ACK_SCRIPT;
+        private static final String ACK_SCRIPT;
 
     static {
         try {
@@ -32,11 +33,7 @@ public class AckRedisService {
                             StandardCharsets.UTF_8
                     );
 
-            ACK_SCRIPT =
-                    new DefaultRedisScript<>(
-                            script,
-                            Long.class
-                    );
+            ACK_SCRIPT = script;
 
         } catch (Exception e) {
             throw new ExceptionInInitializerError(e);
@@ -52,17 +49,14 @@ public class AckRedisService {
         String deliveryKey =
                 RedisKeys.MESSAGE_DELIVERY + messageId;
 
-        Long result =
-                redisTemplate.execute(
-                        ACK_SCRIPT,
-                        List.of(
-                                deliveryKey,
-                                RedisKeys.MESSAGE_RETRY
-                        ),
-                        clientId,
-                        status,
-                        ackAt.toString()
-                );
+        Long result = redis.executeScript(
+                ACK_SCRIPT,
+                Long.class,
+                List.of(deliveryKey, RedisKeys.MESSAGE_RETRY),
+                clientId,
+                status,
+                ackAt.toString()
+        );
 
         return AckResult.from(result);
     }

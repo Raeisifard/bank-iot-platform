@@ -86,12 +86,17 @@ ignored outright — a disconnect must never create a session.
 
 ## Configuration
 
-See `src/main/resources/application.yml`. Key environment variables:
+See `src/main/resources/application.yml`. Redis is provided exclusively by the
+`common-redis` module through `RedisOperations`; this service does not create a
+`RedisTemplate` or configure `spring.data.redis` directly.
+
+Key environment variables:
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka cluster |
-| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | see application.yml | Redis connection |
+| `COMMON_REDIS_ENABLED` | `false` | Enable the shared Redis connection |
+| `COMMON_REDIS_URL` / `REDIS_PASSWORD` / `REDIS_DATABASE` / `REDIS_TIMEOUT` | see application.yml | Shared Redis connection |
 | `CONNECTION_EVENTS_TOPIC` | `client-connection-events` | Source topic (see `app.kafka.topic.connection-events`) |
 | `CONNECTION_EVENTS_DLT` | `client-connection-events.DLT` | Dead-letter topic |
 | `SESSION_TTL_SECONDS` | `180` | Redis key TTL, safety net re-applied on every CONNECTED/KEEPALIVE |
@@ -122,10 +127,13 @@ not something this endpoint does.
    project's package convention — and update `JsonDeserializer.TRUSTED_PACKAGES`
    in `KafkaConsumerConfig` to match wherever `ClientConnectedEvent`/
    `ClientDisconnectedEvent` actually live in your build.
-4. Point `CONNECTION_EVENTS_TOPIC` at whatever topic your ingress service
+4. Configure `COMMON_REDIS_ENABLED=true` and the `COMMON_REDIS_*`/`REDIS_*`
+   connection settings when Redis is available. Keep it false for environments
+   where this Redis-dependent service is not being started.
+5. Point `CONNECTION_EVENTS_TOPIC` at whatever topic your ingress service
    actually publishes to, and confirm the JSON field names match the event
    classes in `common-contract-kafka`.
-5. Create the dead-letter topic (`client-connection-events.DLT`) in your
+6. Create the dead-letter topic (`client-connection-events.DLT`) in your
    Kafka cluster, or let auto-topic-creation handle it in non-prod.
 
 ## Running tests

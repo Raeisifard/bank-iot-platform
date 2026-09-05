@@ -1,6 +1,7 @@
 package com.isc.common.redis;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -32,4 +33,16 @@ public interface RedisOperations {
     Long increment(String key);
 
     Set<String> keys(String pattern);
+
+    boolean removeFromSortedSet(String key, String value);
+
+    void addToSortedSet(String key, String value, double score);
+
+    Set<String> rangeFromSortedSetByScore(String key, double minimum, double maximum);
+
+    <T> T executeScript(
+            String script,
+            Class<T> resultType,
+            List<String> keys,
+            String... arguments);
 }

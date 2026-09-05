@@ -1,10 +1,12 @@
 package com.isc.common.redis;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -163,5 +165,39 @@ final class RedisOperationsImpl implements RedisOperations {
         return result == null
                 ? Collections.emptySet()
                 : result;
+    }
+
+    @Override
+    public boolean removeFromSortedSet(String key, String value) {
+        return Boolean.TRUE.equals(redis.opsForZSet().remove(key, value));
+    }
+
+    @Override
+    public void addToSortedSet(String key, String value, double score) {
+        redis.opsForZSet().add(key, value, score);
+    }
+
+    @Override
+    public Set<String> rangeFromSortedSetByScore(
+            String key,
+            double minimum,
+            double maximum) {
+
+        Set<String> result = redis.opsForZSet().rangeByScore(key, minimum, maximum);
+        return result == null ? Collections.emptySet() : result;
+    }
+
+    @Override
+    public <T> T executeScript(
+            String script,
+            Class<T> resultType,
+            List<String> keys,
+            String... arguments) {
+
+        return redis.execute(
+                new DefaultRedisScript<>(script, resultType),
+                keys,
+                (Object[]) arguments
+        );
     }
 }

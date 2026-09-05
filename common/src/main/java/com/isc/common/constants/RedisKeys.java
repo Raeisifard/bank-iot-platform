@@ -21,4 +21,10 @@ public final class RedisKeys {
     public static final String MESSAGE_RETRY = "delivery:retry";
 
     public static final String MESSAGE_PENDING = "pending:";
+
+    public static final String MESSAGE_DELIVERED = "delivered:";
+
+    public static final String MESSAGE_FAILED = "failed:";
+
+    public static final String MESSAGE_ARCHIVED = "archived:";
 }

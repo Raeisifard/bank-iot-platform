@@ -6,17 +6,14 @@ import com.isc.contract.event.EventType;
 import com.isc.contract.event.session.ClientConnectedEvent;
 import com.isc.contract.event.session.ClientDisconnectedEvent;
 import com.isc.sessionmanager.config.SessionProperties;
+import com.isc.common.redis.RedisOperations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.isc.common.constants.ClientSessionFieldsName.*;
@@ -34,13 +31,7 @@ import static org.mockito.Mockito.*;
 class SessionServiceImplTest {
 
     @Mock
-    private StringRedisTemplate redis;
-
-    @Mock
-    private HashOperations<String, Object, Object> hashOps;
-
-    @Mock
-    private ValueOperations<String, String> valueOps;
+    private RedisOperations redis;
 
     private SessionProperties sessionProperties;
     private SessionServiceImpl service;
@@ -53,7 +44,6 @@ class SessionServiceImplTest {
         sessionProperties = new SessionProperties();
         sessionProperties.setTtlSeconds(180);
         service = new SessionServiceImpl(redis, sessionProperties);
-        lenient().when(redis.<Object, Object>opsForHash()).thenReturn(hashOps);
     }
 
     private ClientAttributes jwt() {
@@ -96,14 +86,13 @@ class SessionServiceImplTest {
 
     @Test
     void handleConnectionEvent_createsConnectivityOnlyRecord_whenNoExistingSession() {
-        when(redis.opsForHash()).thenReturn(hashOps);
-        when(hashOps.entries(KEY)).thenReturn(Map.of());
+        when(redis.entries(KEY)).thenReturn(Map.of());
 
         service.handleConnectionEvent(connectedEvent(1_000L));
 
         @SuppressWarnings("unchecked")
         var captor = org.mockito.ArgumentCaptor.forClass(Map.class);
-        verify(hashOps).putAll(eq(KEY), captor.capture());
+        verify(redis).putAll(eq(KEY), captor.capture());
         Map<String, String> saved = captor.getValue();
 
         assertThat(saved.get(SESSION_ID)).isEqualTo(SID);
@@ -116,28 +105,23 @@ class SessionServiceImplTest {
 
     @Test
     void handleConnectionEvent_discardsStaleEvent() {
-        when(redis.opsForHash()).thenReturn(hashOps);
-        Map<Object, Object> existing = new HashMap<>();
-        existing.put(LAST_EVENT_TIMESTAMP, "5000");
-        when(hashOps.entries(KEY)).thenReturn(existing);
+        when(redis.entries(KEY)).thenReturn(Map.of(LAST_EVENT_TIMESTAMP, "5000"));
 
         service.handleConnectionEvent(connectedEvent(1_000L)); // older than 5000
 
-        verify(hashOps, never()).putAll(anyString(), anyMap());
+        verify(redis, never()).putAll(anyString(), anyMap());
         verify(redis, never()).expire(anyString(), any(Duration.class));
     }
 
     @Test
     void handleConnectionEvent_appliesNewerEvent() {
-        when(redis.opsForHash()).thenReturn(hashOps);
-        Map<Object, Object> existing = new HashMap<>();
-        existing.put(LAST_EVENT_TIMESTAMP, "1000");
-        existing.put(CUSTOMER_ID, "cust-1001");
-        when(hashOps.entries(KEY)).thenReturn(existing);
+        when(redis.entries(KEY)).thenReturn(Map.of(
+            LAST_EVENT_TIMESTAMP, "1000",
+            CUSTOMER_ID, "cust-1001"));
 
         service.handleConnectionEvent(connectedEvent(5_000L));
 
-        verify(hashOps).putAll(eq(KEY), anyMap());
+        verify(redis).putAll(eq(KEY), anyMap());
         verify(redis).expire(KEY, Duration.ofSeconds(180));
     }
 
@@ -147,39 +131,33 @@ class SessionServiceImplTest {
 
     @Test
     void handleDisconnectionEvent_ignoredWhenSessionDoesNotExist() {
-        when(redis.opsForHash()).thenReturn(hashOps);
-        when(hashOps.entries(KEY)).thenReturn(Map.of());
+        when(redis.entries(KEY)).thenReturn(Map.of());
 
         service.handleDisconnectionEvent(disconnectedEvent(1_000L));
 
-        verify(hashOps, never()).putAll(anyString(), anyMap());
+        verify(redis, never()).putAll(anyString(), anyMap());
     }
 
     @Test
     void handleDisconnectionEvent_discardsStaleEvent() {
-        when(redis.opsForHash()).thenReturn(hashOps);
-        Map<Object, Object> existing = new HashMap<>();
-        existing.put(LAST_EVENT_TIMESTAMP, "5000");
-        when(hashOps.entries(KEY)).thenReturn(existing);
+        when(redis.entries(KEY)).thenReturn(Map.of(LAST_EVENT_TIMESTAMP, "5000"));
 
         service.handleDisconnectionEvent(disconnectedEvent(1_000L)); // older than 5000
 
-        verify(hashOps, never()).putAll(anyString(), anyMap());
+        verify(redis, never()).putAll(anyString(), anyMap());
     }
 
     @Test
     void handleDisconnectionEvent_marksSessionOffline() {
-        when(redis.opsForHash()).thenReturn(hashOps);
-        Map<Object, Object> existing = new HashMap<>();
-        existing.put(LAST_EVENT_TIMESTAMP, "1000");
-        existing.put(STATUS, SessionStatus.ONLINE.name());
-        when(hashOps.entries(KEY)).thenReturn(existing);
+        when(redis.entries(KEY)).thenReturn(Map.of(
+            LAST_EVENT_TIMESTAMP, "1000",
+            STATUS, SessionStatus.ONLINE.name()));
 
         service.handleDisconnectionEvent(disconnectedEvent(5_000L));
 
         @SuppressWarnings("unchecked")
         var captor = org.mockito.ArgumentCaptor.forClass(Map.class);
-        verify(hashOps).putAll(eq(KEY), captor.capture());
+        verify(redis).putAll(eq(KEY), captor.capture());
         Map<String, String> saved = captor.getValue();
 
         assertThat(saved.get(STATUS)).isEqualTo(SessionStatus.OFFLINE.name());
@@ -192,8 +170,7 @@ class SessionServiceImplTest {
 
     @Test
     void getSession_returnsNull_whenNoRecord() {
-        when(redis.opsForHash()).thenReturn(hashOps);
-        when(hashOps.entries(KEY)).thenReturn(Map.of());
+        when(redis.entries(KEY)).thenReturn(Map.of());
 
         assertThat(service.getSession(SID)).isNull();
     }

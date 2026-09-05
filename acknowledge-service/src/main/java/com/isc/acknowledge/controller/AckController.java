@@ -2,7 +2,7 @@ package com.isc.acknowledge.controller;
 
 import com.isc.acknowledge.dto.AckRequest;
 import com.isc.common.constants.KafkaTopics;
-import com.isc.common.dto.ClientAttributes;
+import com.isc.common.security.model.SecurityPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -12,6 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @RestController
 @RequestMapping("/api/v1/acks")
@@ -28,14 +32,14 @@ public class AckController {
     )
     public ResponseEntity<Void> acknowledge(
             @Valid @RequestBody AckRequest request,
-            @AuthenticationPrincipal ClientAttributes client) {
+            @AuthenticationPrincipal SecurityPrincipal principal) {
 
-        validateClientOwnership(request, client);
+        String clientId = validateClientOwnership(request, principal);
 
         log.debug(
                 "ACK accepted for publication. messageId={}, clientId={}",
                 request.getMessageId(),
-                client.getCid()
+                clientId
         );
 
         kafkaTemplate.send(
@@ -47,20 +51,24 @@ public class AckController {
         return ResponseEntity.accepted().build();
     }
 
-    private void validateClientOwnership(
+    private String validateClientOwnership(
             AckRequest request,
-            ClientAttributes client) {
+            SecurityPrincipal principal) {
 
-        if (client == null) {
-            throw new IllegalStateException("Authenticated client is missing");
+        if (principal == null || principal.getClientAttributes() == null
+                || principal.getClientAttributes().getCid() == null
+                || principal.getClientAttributes().getCid().isBlank()) {
+            log.warn("ACK rejected: authenticated JWT has no client cid");
+            throw new ResponseStatusException(
+                    UNAUTHORIZED, "Authenticated client identity is missing");
         }
 
-        if (request.getClientId() == null ||
-                !client.getCid().equals(request.getClientId())) {
-
-            throw new IllegalArgumentException(
-                    "ACK clientId does not match authenticated client"
-            );
+        String clientId = principal.getClientAttributes().getCid();
+        if (request.getClientId() == null || !clientId.equals(request.getClientId())) {
+            log.warn("ACK rejected: client cid mismatch. messageId={}, tokenCid={}, requestCid={}",
+                    request.getMessageId(), clientId, request.getClientId());
+            throw new ResponseStatusException(
+                    FORBIDDEN, "ACK clientId does not match authenticated client");
         }
 
         if (request.getMessageId() == null ||
@@ -76,5 +84,7 @@ public class AckController {
                     "status is required"
             );
         }
+
+                return clientId;
     }
 }

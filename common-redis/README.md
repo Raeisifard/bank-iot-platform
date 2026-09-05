@@ -9,7 +9,7 @@ This module owns:
 - Redis connection configuration
 - Redis connection creation
 - `StringRedisTemplate`
-- a small `RedisOperations` abstraction for key/value and hash operations
+- a small `RedisOperations` abstraction for key/value, hash, sorted-set, and Lua script operations
 
 Service/domain modules should depend on this module instead of creating their own
 `RedisConnectionFactory`, `LettuceConnectionFactory`, or `StringRedisTemplate`.
@@ -69,7 +69,22 @@ Then add the dependency to services that need Redis:
 </dependency>
 ```
 
-The first intended consumers are `token-service` and `session-manager-service`.
+Current consumers include `acknowledge-service` and `session-manager-service`.
+Future consumers such as `token-service` should also depend on this module rather
+than adding a Redis starter or creating a Redis template directly.
+
+## Consumer rules
+
+Consumers inject `RedisOperations`; they must not inject Spring Data Redis types or
+create connection factories/templates. The shared API keeps connection creation and
+the `common.redis.enabled` switch in one place. Redis-dependent services should set
+`COMMON_REDIS_ENABLED=false` for environments where Redis is intentionally absent;
+the service may still require Redis for its business workflow, but it will not create
+a Redis connection through this module while disabled.
+
+Use `common.redis.url`, `common.redis.password`, `common.redis.database`, and
+`common.redis.timeout` for local, bare-metal, container, Kubernetes, Vault, or future
+Config Server overrides. Do not commit credentials or environment-specific hosts.
 
 ## Domain ownership
 

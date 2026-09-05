@@ -5,42 +5,64 @@ spring:
   application:
     name: acknowledge-service
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: acknowledge-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      enable-idempotence: true
+      retries: 10
+
   jackson:
     serialization:
       write-dates-as-timestamps: false
     default-property-inclusion: non_null
 
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:172.16.88.115:9092}
+common:
+  vault:
+    enabled: ${COMMON_VAULT_ENABLED:true}
+    uri: ${VAULT_URI:http://172.16.88.115:8200}
+    token: ${VAULT_TOKEN:root}
+    kv:
+      enabled: true
+      mount: ${VAULT_KV_MOUNT:kv}
+    transit:
+      enabled: true
+      mount: ${VAULT_TRANSIT_MOUNT:transit}
 
-    consumer:
-      group-id: acknowledge-service
-      auto-offset-reset: earliest
-      enable-auto-commit: false
+  security:
+    enabled: true
+    jwt:
+      enabled: true
+      algorithm: RS256
+      clock-skew: 30s
+      issuer: ${TOKEN_ISSUER:isc-token-service}
+      audiences:
+        - ${TOKEN_AUDIENCE:isc-services}
+      vault-key-name: ${TOKEN_JWT_KEY_NAME:bank-jwt-v2}
+      policy-path: ${TOKEN_JWT_POLICY_PATH:key-management/bank-jwt}
+      policy-mount: ${TOKEN_JWT_POLICY_MOUNT:kv}
 
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  web:
+    enabled: true
+    security-enabled: true
+    authentication-enabled: true
 
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
-      acks: all
-      enable-idempotence: true
-      retries: 10
+  redis:
+    enabled: ${COMMON_REDIS_ENABLED:false}
+    url: ${COMMON_REDIS_URL:redis://localhost:6379}
+    password: ${REDIS_PASSWORD:}
+    database: ${REDIS_DATABASE:0}
+    timeout: ${REDIS_TIMEOUT:2s}
 
 app:
   kafka:
     topics:
       ack: ack.event
-
-vault:
-  uri: http://172.16.88.115:8200
-  token: root
-security:
-  authentication:
-    enabled: true
-  jwt-secret: my-super-secret-key-my-super-secret-key
-  vault:
-    transit:
-      key-name: bank-jwt-v2

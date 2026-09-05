@@ -5,12 +5,12 @@ import com.isc.common.dto.SessionInfo;
 import com.isc.common.enums.SessionReason;
 import com.isc.common.enums.SessionStatus;
 import com.isc.common.exception.SessionNotFoundException;
+import com.isc.common.redis.RedisOperations;
 import com.isc.contract.event.session.ClientConnectedEvent;
 import com.isc.contract.event.session.ClientDisconnectedEvent;
 import com.isc.sessionmanager.config.SessionProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -35,7 +35,7 @@ import static com.isc.common.constants.RedisKeys.*;
 @Slf4j
 public class SessionServiceImpl implements SessionService {
 
-    private final StringRedisTemplate redis;
+    private final RedisOperations redis;
     private final SessionProperties sessionProperties;
 
     // ---------------------------------------------------------------
@@ -60,22 +60,20 @@ public class SessionServiceImpl implements SessionService {
             values.put(REASON, session.getReason().name());
         }
 
-        redis.opsForHash().putAll(key, values);
+        redis.putAll(key, values);
 
         Duration ttl = sessionProperties.getSessionIdleTtl().plus(sessionProperties.getSessionAuditTtl());
         redis.expire(key, ttl);
 
-        redis.opsForValue().set(buildDeviceSessionKey(session.getCustomerId(), session.getDeviceId()),
-                session.getSessionId(), ttl);
-        redis.opsForValue().set(buildClientSessionKey(session.getClientId()),
-                session.getSessionId(), ttl);
+        redis.set(buildDeviceSessionKey(session.getCustomerId(), session.getDeviceId()), session.getSessionId(), ttl);
+        redis.set(buildClientSessionKey(session.getClientId()), session.getSessionId(), ttl);
 
         return session.getSessionId();
     }
 
     @Override
     public SessionInfo getSession(String sessionId) {
-        Map<Object, Object> map = redis.opsForHash().entries(buildSessionKey(sessionId));
+        Map<String, String> map = redis.entries(buildSessionKey(sessionId));
         if (map.isEmpty()) {
             return null;
         }
@@ -102,8 +100,8 @@ public class SessionServiceImpl implements SessionService {
         if (session.getStatus() == SessionStatus.REVOKED) {
             return;
         }
-        redis.opsForHash().put(key, STATUS, SessionStatus.REVOKED.name());
-        redis.opsForHash().put(key, REASON, (reason != null ? reason : SessionReason.NONE).name());
+        redis.put(key, STATUS, SessionStatus.REVOKED.name());
+        redis.put(key, REASON, (reason != null ? reason : SessionReason.NONE).name());
         redis.delete(buildDeviceSessionKey(session.getCustomerId(), session.getDeviceId()));
         redis.delete(buildClientSessionKey(session.getClientId()));
     }
@@ -121,7 +119,7 @@ public class SessionServiceImpl implements SessionService {
     public void refreshSession(String sessionId) {
         String key = buildSessionKey(sessionId);
         requireSession(sessionId, key);
-        redis.opsForHash().put(key, LAST_REFRESH_AT, Instant.now().toString());
+        redis.put(key, LAST_REFRESH_AT, Instant.now().toString());
         redis.expire(key, sessionProperties.getSessionIdleTtl());
     }
 
@@ -131,12 +129,12 @@ public class SessionServiceImpl implements SessionService {
         if (!redis.hasKey(key)) {
             throw new SessionNotFoundException(key + " does not exist!");
         }
-        redis.opsForHash().put(key, LAST_REFRESH_AT, Instant.now().toString());
+        redis.put(key, LAST_REFRESH_AT, Instant.now().toString());
     }
 
     @Override
     public String getDeviceSession(String customerId, String deviceId) {
-        return redis.opsForValue().get(buildDeviceSessionKey(customerId, deviceId));
+        return redis.get(buildDeviceSessionKey(customerId, deviceId)).orElse(null);
     }
 
     @Override
@@ -147,7 +145,7 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public String getClientSession(String clientId) {
-        return redis.opsForValue().get(buildClientSessionKey(clientId));
+        return redis.get(buildClientSessionKey(clientId)).orElse(null);
     }
 
     // ---------------------------------------------------------------
@@ -164,7 +162,7 @@ public class SessionServiceImpl implements SessionService {
         String sid = jwt.getSid();
         String key = buildSessionKey(sid);
 
-        Map<Object, Object> existing = redis.opsForHash().entries(key);
+        Map<String, String> existing = redis.entries(key);
 
         if (isStale(event, existing)) {
             log.info("Discarding stale/out-of-order event: sid={} eventType={} eventTs={} currentTs={}",
@@ -194,7 +192,7 @@ public class SessionServiceImpl implements SessionService {
         String sid = jwt.getSid();
         String key = buildSessionKey(sid);
 
-        Map<Object, Object> existing = redis.opsForHash().entries(key);
+        Map<String, String> existing = redis.entries(key);
 
         // Session does not exist.
         // A disconnect event must never create a new session.
@@ -208,10 +206,10 @@ public class SessionServiceImpl implements SessionService {
         }
 
         // Ignore old / out-of-order disconnect events.
-        Object lastTs = existing.get(LAST_EVENT_TIMESTAMP);
+        String lastTs = existing.get(LAST_EVENT_TIMESTAMP);
 
         if (lastTs != null
-                && event.getDisconnectedAt() < Long.parseLong((String) lastTs)) {
+                && event.getDisconnectedAt() < Long.parseLong(lastTs)) {
 
             log.info(
                     "Discarding stale/out-of-order disconnect event: sid={} eventTs={} currentTs={}",
@@ -258,7 +256,7 @@ public class SessionServiceImpl implements SessionService {
             fields.put(PROTOCOL, String.valueOf(event.getProtocol()));
         }
 
-        redis.opsForHash().putAll(key, fields);
+        redis.putAll(key, fields);
 
         log.info(
                 "Session connectivity updated: sid={} status=OFFLINE node={}",
@@ -268,9 +266,9 @@ public class SessionServiceImpl implements SessionService {
     }
 
     /** Guards against a redelivered/out-of-order event overwriting a newer state. */
-    private boolean isStale(ClientConnectedEvent event, Map<Object, Object> existing) {
-        Object lastTs = existing.get(LAST_EVENT_TIMESTAMP);
-        return lastTs != null && event.getConnectedAt() < Long.parseLong((String) lastTs);
+    private boolean isStale(ClientConnectedEvent event, Map<String, String> existing) {
+        String lastTs = existing.get(LAST_EVENT_TIMESTAMP);
+        return lastTs != null && event.getConnectedAt() < Long.parseLong(lastTs);
     }
 
     private void applyConnectivity(String sid, String key, ClientConnectedEvent event,
@@ -299,7 +297,7 @@ public class SessionServiceImpl implements SessionService {
             log.warn("No pre-existing session for sid={}, created connectivity-only record", sid);
         }
 
-        redis.opsForHash().putAll(key, fields);
+        redis.putAll(key, fields);
         // Safety-net TTL: re-applied on every CONNECTED/KEEPALIVE so a lost
         // DISCONNECTED event can't leave a client reporting online forever.
         // This was previously commented out, silently defeating the TTL
@@ -321,26 +319,26 @@ public class SessionServiceImpl implements SessionService {
         return session;
     }
 
-    private SessionInfo toSessionInfo(Map<Object, Object> map) {
-        String reason = (String) map.get(REASON);
-        String lastEventTs = (String) map.get(LAST_EVENT_TIMESTAMP);
-        String protocol = (String) map.get(PROTOCOL);
+    private SessionInfo toSessionInfo(Map<String, String> map) {
+        String reason = map.get(REASON);
+        String lastEventTs = map.get(LAST_EVENT_TIMESTAMP);
+        String protocol = map.get(PROTOCOL);
 
         return SessionInfo.builder()
-                .sessionId((String) map.get(SESSION_ID))
-                .customerId((String) map.get(CUSTOMER_ID))
-                .deviceId((String) map.get(DEVICE_ID))
-                .clientId((String) map.get(CLIENT_ID))
-                .username((String) map.get(USERNAME))
-                .ipAddress((String) map.get(IP_ADDRESS))
-                .node((String) map.get(NODE))
+                .sessionId(map.get(SESSION_ID))
+                .customerId(map.get(CUSTOMER_ID))
+                .deviceId(map.get(DEVICE_ID))
+                .clientId(map.get(CLIENT_ID))
+                .username(map.get(USERNAME))
+                .ipAddress(map.get(IP_ADDRESS))
+                .node(map.get(NODE))
                 .protocol(protocol != null ? Integer.valueOf(protocol) : null)
-                .refreshTokenId((String) map.get(REFRESH_TOKEN_ID))
-                .createdAt(parseInstant((String) map.get(CREATED_AT)))
-                .expireAt(parseInstant((String) map.get(EXPIRE_AT)))
-                .lastRefreshAt(parseInstant((String) map.get(LAST_REFRESH_AT)))
+                .refreshTokenId(map.get(REFRESH_TOKEN_ID))
+                .createdAt(parseInstant(map.get(CREATED_AT)))
+                .expireAt(parseInstant(map.get(EXPIRE_AT)))
+                .lastRefreshAt(parseInstant(map.get(LAST_REFRESH_AT)))
                 .lastEventTimestamp(lastEventTs != null ? Long.valueOf(lastEventTs) : null)
-                .status(SessionStatus.valueOf((String) map.get(STATUS)))
+                .status(SessionStatus.valueOf(map.get(STATUS)))
                 .reason(reason != null ? SessionReason.valueOf(reason) : SessionReason.NONE)
                 .build();
     }

@@ -12,6 +12,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -23,6 +25,7 @@ import java.util.List;
         havingValue = "true",
         matchIfMissing = true)
 public class CommonSecurityConfiguration implements WebMvcConfigurer {
+    private static final Logger log = LoggerFactory.getLogger(CommonSecurityConfiguration.class);
 
     private final CommonWebProperties properties;
 
@@ -51,6 +54,17 @@ public class CommonSecurityConfiguration implements WebMvcConfigurer {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(s ->
                         s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, exception) -> {
+                    log.warn("Rejected unauthenticated request: {} {}",
+                        request.getMethod(), request.getRequestURI());
+                    response.sendError(401, "Authentication is required");
+                })
+                .accessDeniedHandler((request, response, exception) -> {
+                    log.warn("Rejected unauthorized request: {} {}",
+                        request.getMethod(), request.getRequestURI());
+                    response.sendError(403, "Access is denied");
+                }))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(properties.getPublicPaths()).permitAll();
 

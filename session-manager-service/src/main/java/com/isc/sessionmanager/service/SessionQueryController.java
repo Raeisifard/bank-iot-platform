@@ -15,13 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * Not intended to be internet-facing — put behind internal network / gateway ACLs.
  *
- * NOTE: this previously took a phoneNumber path variable and read from a
- * legacy phone-number-keyed JSON blob (SessionRedisRepository) that nothing
- * wrote to anymore — every call 404'd. Sessions are keyed by sessionId
- * (jwt.sid) in a Redis hash (see SessionServiceImpl), so this now takes
- * sessionId and reads through the same SessionService used everywhere else
- * in this module. If a caller needs to resolve phone number -> sessionId,
- * that lookup belongs upstream (token-service owns that mapping), not here.
+ * Sessions are keyed by sessionId (jwt.sid) in a Redis hash (see
+ * SessionServiceImpl), so this endpoint reads through the same SessionService
+ * used everywhere else in this module. If a caller needs to resolve phone
+ * number -> sessionId, that lookup belongs upstream (token-service owns that
+ * mapping), not here.
  */
 @RestController
 @RequestMapping("/internal/sessions")

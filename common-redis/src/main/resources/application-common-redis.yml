@@ -1,0 +1,11 @@
+# Reference configuration. Import/merge this into each service's application.yml.
+#
+# common.redis.enabled is intentionally mandatory. Each service must explicitly set
+# it to true or false.
+common:
+  redis:
+    enabled: ${COMMON_REDIS_ENABLED:false}
+    url: ${REDIS_URL:redis://172.16.88.115:6379}
+    password: ${REDIS_PASSWORD:root}
+    database: ${REDIS_DATABASE:0}
+    timeout: ${REDIS_TIMEOUT:2s}

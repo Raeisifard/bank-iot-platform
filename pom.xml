@@ -19,6 +19,7 @@
         <module>common-security</module>
         <module>common-web</module>
         <module>common-vault</module>
+        <module>common-redis</module>
 
         <module>console</module>
         <module>token-service</module>

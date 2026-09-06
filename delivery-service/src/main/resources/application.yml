@@ -4,8 +4,10 @@ server:
 spring:
   application:
     name: ${DELIVERY_SERVICE_NAME:delivery-service}
+  profiles:
+    active: dev
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:172.16.88.115:9092}
     consumer:
       auto-offset-reset: earliest
       enable-auto-commit: false
@@ -27,17 +29,17 @@ common:
     timeout: ${REDIS_TIMEOUT:2s}
 
 delivery:
-  enabled: ${DELIVERY_ENABLED:false}
+  enabled: ${DELIVERY_ENABLED:true}
   kafka:
     inbound-topic: ${DELIVERY_INBOUND_TOPIC:delivery.inbound}
     outbound-topic: ${DELIVERY_OUTBOUND_TOPIC:mqtt.message.send}
     acknowledgement-topic: ${DELIVERY_ACK_TOPIC:ack.event}
     consumer-group: ${DELIVERY_CONSUMER_GROUP:delivery-service}
   oracle:
-    enabled: ${DELIVERY_ORACLE_ENABLED:false}
-    url: ${ORACLE_JDBC_URL:}
-    username: ${ORACLE_USERNAME:}
-    password: ${ORACLE_PASSWORD:}
+    enabled: ${DELIVERY_ORACLE_ENABLED:true}
+    url: ${ORACLE_JDBC_URL:jdbc:oracle:thin:@172.16.88.115:1521:XE}
+    username: ${ORACLE_USERNAME:SYSTEM}
+    password: ${ORACLE_PASSWORD:oracle}
     table-name: ${DELIVERY_ORACLE_TABLE:IOT_DELIVERY_MESSAGE}
   retry:
     publish-timeout: ${DELIVERY_PUBLISH_TIMEOUT:10s}

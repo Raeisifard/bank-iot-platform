@@ -7,7 +7,7 @@ token:
     issuer: ${TOKEN_ISSUER:isc-token-service}
     audience: ${TOKEN_AUDIENCE:isc-services}
     clock-skew: 30s
-    access-token-lifetime: 15m
+    access-token-lifetime: 150m
     refresh-token-lifetime: 30d
 
   jwt:
@@ -50,3 +50,40 @@ common:
     enabled: true
     security-enabled: false
     authentication-enabled: false
+
+spring:
+  application:
+    name: token-service
+  profiles:
+    active: dev
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_URL:http://localhost:9000}
+        auto-registration: true
+        instance:
+          prefer-ip: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: token-service
+    description: Dedicated token-issuing service
+    version: 1.0.0
+
+logging:
+  level:
+    org.apache.kafka: WARN

@@ -20,9 +20,9 @@ spring:
 
 common:
   redis:
-    enabled: ${COMMON_REDIS_ENABLED:false}
-    url: ${COMMON_REDIS_URL:${REDIS_URL:redis://localhost:6379}}
-    password: ${REDIS_PASSWORD:}
+    enabled: ${COMMON_REDIS_ENABLED:true}
+    url: ${COMMON_REDIS_URL:redis://172.16.88.115:6379}
+    password: ${REDIS_PASSWORD:StrongRedisPassword}
     database: ${REDIS_DATABASE:0}
     timeout: ${REDIS_TIMEOUT:2s}
 

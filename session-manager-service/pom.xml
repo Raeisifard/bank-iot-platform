@@ -184,7 +184,6 @@
         <dependency>
             <groupId>de.codecentric</groupId>
             <artifactId>spring-boot-admin-starter-client</artifactId>
-            <version>3.5.9</version>
         </dependency>
     </dependencies>
 

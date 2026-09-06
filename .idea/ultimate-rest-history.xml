@@ -3,6 +3,58 @@
   <component name="UltimateRestHistory">
     <items>
       <historyItem>
+        <option name="timestamp" value="1788621412545" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;clientId&quot; : &quot;user-1004&quot;,
+  &quot;clientSecret&quot; : &quot;123456&quot;,
+  &quot;subject&quot; : &quot;behnam&quot;,
+  &quot;tokenType&quot; : &quot;jwt&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1788607030252" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;clientId&quot; : &quot;user-1004&quot;,
+  &quot;clientSecret&quot; : &quot;123456&quot;,
+  &quot;subject&quot; : &quot;behnam&quot;,
+  &quot;tokenType&quot; : &quot;jwt&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1788602068871" />
+        <request url="http://localhost:8083/.well-known/jwks.json" />
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1788600530072" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;clientId&quot; : &quot;user-1004&quot;,
+  &quot;clientSecret&quot; : &quot;123456&quot;,
+  &quot;subject&quot; : &quot;behnam&quot;,
+  &quot;tokenType&quot; : &quot;jwt&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1788600496502" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;clientId&quot; : &quot;&quot;,
+  &quot;clientSecret&quot; : &quot;&quot;,
+  &quot;subject&quot; : &quot;&quot;,
+  &quot;tokenType&quot; : &quot;&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1788600464695" />
+        <request url="http://localhost:8083/.well-known/jwks.json" />
+      </historyItem>
+      <historyItem>
         <option name="timestamp" value="1785650476966" />
         <request method="POST" url="http://localhost:8083/api/v1/auth/token">
           <bodyContent>{
@@ -292,30 +344,6 @@
       <historyItem>
         <option name="timestamp" value="1784886000200" />
         <request url="http://localhost:8083/test" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885984437" />
-        <request url="http://localhost:8083/test" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885980389" />
-        <request url="http://localhost:8083/test" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885955718" />
-        <request url="http://localhost:8083/test" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885676725" />
-        <request url="http://localhost:8083/.well-known/test" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885674246" />
-        <request url="http://localhost:8083/.well-known/test" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784885666213" />
-        <request url="http://localhost:8080/.well-known/test" />
       </historyItem>
     </items>
   </component>

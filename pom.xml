@@ -93,6 +93,12 @@
                 <artifactId>ojdbc11</artifactId>
                 <version>23.5.0.24.07</version>
             </dependency>
+            <!-- Admin Client -->
+            <dependency>
+                <groupId>de.codecentric</groupId>
+                <artifactId>spring-boot-admin-starter-client</artifactId>
+                <version>3.5.9</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>

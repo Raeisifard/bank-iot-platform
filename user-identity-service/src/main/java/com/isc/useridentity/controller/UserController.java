@@ -1,0 +1,3 @@
+package com.isc.useridentity.controller;
+import com.isc.useridentity.api.ApiDtos; import com.isc.useridentity.service.UserIdentityService; import jakarta.validation.Valid; import lombok.RequiredArgsConstructor; import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/api/v1/users") @RequiredArgsConstructor public class UserController { private final UserIdentityService service; @PostMapping public ApiDtos.UserResponse create(@Valid @RequestBody ApiDtos.CreateUserRequest r){return service.create(r);} @GetMapping("/{userId}") public ApiDtos.UserResponse get(@PathVariable String userId){return service.get(userId);} }

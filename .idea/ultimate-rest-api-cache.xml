@@ -30,6 +30,26 @@
           <param name="sessionId" value="test" type="PATH" dataType="String" />
         </params>
       </api>
+      <api method="POST" url="/api/v1/client-identities" className="com.isc.clientidentity.controller.ClientIdentityController" methodName="register" moduleName="client-identity-service">
+        <params>
+          <param name="body" value="{ }" type="BODY" dataType="RegisterClientRequest" />
+        </params>
+      </api>
+      <api method="POST" url="/api/v1/client-identities/{cid}/challenges" className="com.isc.clientidentity.controller.ClientIdentityController" methodName="challenge" moduleName="client-identity-service">
+        <params>
+          <param name="cid" value="test" type="PATH" dataType="String" />
+        </params>
+      </api>
+      <api method="POST" url="/api/v1/client-identities/verify" className="com.isc.clientidentity.controller.ClientIdentityController" methodName="verify" moduleName="client-identity-service">
+        <params>
+          <param name="body" value="{ }" type="BODY" dataType="VerifyProofRequest" />
+        </params>
+      </api>
+      <api method="DELETE" url="/api/v1/client-identities/{cid}" className="com.isc.clientidentity.controller.ClientIdentityController" methodName="revoke" moduleName="client-identity-service">
+        <params>
+          <param name="cid" value="test" type="PATH" dataType="String" />
+        </params>
+      </api>
     </cachedApis>
   </component>
 </project>

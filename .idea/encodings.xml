@@ -7,6 +7,8 @@
     <file url="file://$PROJECT_DIR$/admin-panel/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/auth-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/auth-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/client-identity-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/client-simulator/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common-contract-grpc/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common-contract-kafka/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/common-contract/src/main/java" charset="UTF-8" />
@@ -36,5 +38,6 @@
     <file url="file://$PROJECT_DIR$/token-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/transaction-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/transaction-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/user-identity-service/src/main/java" charset="UTF-8" />
   </component>
 </project>

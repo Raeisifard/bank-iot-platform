@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8085}
+  port: ${SERVER_PORT:8086}
 
 spring:
   application:
@@ -17,13 +17,36 @@ client-identity:
 
 common:
   redis:
-    enabled: ${COMMON_REDIS_ENABLED:false}
-    url: ${REDIS_URL:redis://localhost:6379}
+    enabled: ${COMMON_REDIS_ENABLED:true}
+    url: ${REDIS_URL:redis://172.16.88.115:6379}
+    password: ${REDIS_PASSWORD:StrongRedisPassword}
     database: ${REDIS_DATABASE:0}
     timeout: ${REDIS_TIMEOUT:2s}
+
+  security:
+    enabled: false
+
+  web:
+    enabled: true
+    security-enabled: false
+    authentication-enabled: false
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: "*" #health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always #when-authorized
+
+info:
+  app:
+    name: client-identity-service
+    description: Client identity service
+    version: 1.0.0
+
+logging:
+  level:
+    com.isc.clientidentity: INFO
+    com.isc.common: WARN

@@ -1,0 +1,46 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: user-identity-service
+    description: User identification service
+    version: 1.0.0
+
+common:
+  security:
+    enabled: false
+  web:
+    enabled: true
+    security-enabled: false
+    authentication-enabled: false
+
+  redis:
+    enabled: ${COMMON_REDIS_ENABLED:true}
+    url: ${COMMON_REDIS_URL:redis://172.16.88.115:6379}
+    password: ${REDIS_PASSWORD:StrongRedisPassword}
+    database: ${REDIS_DATABASE:0}
+    timeout: ${REDIS_TIMEOUT:2s}
+
+logging:
+  level:
+    com.isc.useridentity: DEBUG

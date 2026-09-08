@@ -1,0 +1,3 @@
+package com.isc.useridentity.service;
+import com.isc.useridentity.entity.AuthenticationAudit; import com.isc.useridentity.repository.AuthenticationAuditRepository; import lombok.RequiredArgsConstructor; import org.springframework.stereotype.Service;
+@Service @RequiredArgsConstructor public class AuditService { private final AuthenticationAuditRepository repo; public void event(String auth,String user,String client,String type,String method,String detail){AuthenticationAudit a=new AuthenticationAudit();a.setAuthenticationId(auth);a.setUserId(user);a.setClientId(client);a.setEventType(type);a.setMethod(method);a.setDetail(detail);repo.save(a);} }

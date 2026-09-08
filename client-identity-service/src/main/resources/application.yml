@@ -1,0 +1,29 @@
+server:
+  port: ${SERVER_PORT:8085}
+
+spring:
+  application:
+    name: client-identity-service
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_URL:http://localhost:9000}
+        auto-registration: true
+        instance:
+          prefer-ip: true
+
+client-identity:
+  challenge-ttl: ${CLIENT_IDENTITY_CHALLENGE_TTL:2m}
+
+common:
+  redis:
+    enabled: ${COMMON_REDIS_ENABLED:false}
+    url: ${REDIS_URL:redis://localhost:6379}
+    database: ${REDIS_DATABASE:0}
+    timeout: ${REDIS_TIMEOUT:2s}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

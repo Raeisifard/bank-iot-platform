@@ -24,6 +24,7 @@
 
         <module>console</module>
         <module>token-service</module>
+        <module>client-identity-service</module>
         <module>transaction-service</module>
         <module>notification-service</module>
         <module>acknowledge-service</module>

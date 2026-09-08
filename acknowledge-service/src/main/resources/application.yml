@@ -4,9 +4,18 @@ server:
 spring:
   application:
     name: acknowledge-service
+  profiles:
+    active: dev
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_URL:http://localhost:9000}
+        auto-registration: true
+        instance:
+          prefer-ip: true
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:172.16.88.115:9092}
     consumer:
       group-id: acknowledge-service
       auto-offset-reset: earliest
@@ -66,3 +75,27 @@ app:
   kafka:
     topics:
       ack: ack.event
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: token-service
+    description: Dedicated token-issuing service
+    version: 1.0.0
+
+logging:
+  level:
+    org.apache.kafka: WARN

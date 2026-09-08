@@ -3,6 +3,28 @@
   <component name="UltimateRestHistory">
     <items>
       <historyItem>
+        <option name="timestamp" value="1788770027177" />
+        <request method="POST" url="http://localhost:8083/api/v1/auth/token">
+          <bodyContent>{
+  &quot;clientId&quot; : &quot;user-1000&quot;,
+  &quot;clientSecret&quot; : &quot;123456&quot;,
+  &quot;subject&quot; : &quot;ravi&quot;,
+  &quot;tokenType&quot; : &quot;bearer&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
+        <option name="timestamp" value="1788770021657" />
+        <request method="POST" url="http://localhost:8080/api/v1/auth/token">
+          <bodyContent>{
+  &quot;clientId&quot; : &quot;user-1000&quot;,
+  &quot;clientSecret&quot; : &quot;123456&quot;,
+  &quot;subject&quot; : &quot;ravi&quot;,
+  &quot;tokenType&quot; : &quot;bearer&quot;
+}</bodyContent>
+        </request>
+      </historyItem>
+      <historyItem>
         <option name="timestamp" value="1788621412545" />
         <request method="POST" url="http://localhost:8083/api/v1/auth/token">
           <bodyContent>{
@@ -335,14 +357,6 @@
       </historyItem>
       <historyItem>
         <option name="timestamp" value="1784888440559" />
-        <request url="http://localhost:8083/test" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784888325058" />
-        <request url="http://localhost:8083/test" />
-      </historyItem>
-      <historyItem>
-        <option name="timestamp" value="1784886000200" />
         <request url="http://localhost:8083/test" />
       </historyItem>
     </items>

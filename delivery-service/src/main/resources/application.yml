@@ -6,6 +6,13 @@ spring:
     name: ${DELIVERY_SERVICE_NAME:delivery-service}
   profiles:
     active: dev
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_URL:http://localhost:9000}
+        auto-registration: true
+        instance:
+          prefer-ip: true
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:172.16.88.115:9092}
     consumer:
@@ -21,6 +28,11 @@ spring:
       retries: 10
 
 common:
+  security:
+    enabled: false
+  web:
+    security-enabled: false
+    authentication-enabled: false
   redis:
     enabled: ${COMMON_REDIS_ENABLED:true}
     url: ${COMMON_REDIS_URL:redis://172.16.88.115:6379}
@@ -55,8 +67,25 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: "*"
+
   endpoint:
     health:
-      probes:
-        enabled: true
+      show-details: always
+
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: delivery-service
+    description: Delivery service
+    version: 1.0.0
+
+logging:
+  level:
+    com.isc.delivery: INFO
+    org.apache.kafka: WARN
+    de.codecentric.boot.admin.client: DEBUG
+

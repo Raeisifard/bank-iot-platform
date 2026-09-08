@@ -88,8 +88,8 @@ management:
 
 info:
   app:
-    name: kafka-session-service
-    description: Kafka session service
+    name: session-service
+    description: Session manager service
     version: 1.0.0
 
 logging:
